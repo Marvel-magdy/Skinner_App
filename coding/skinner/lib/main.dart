@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:skinner/splashScreen.dart';
 void main()
 {
   runApp(const Skinner());
