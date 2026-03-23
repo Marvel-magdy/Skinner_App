@@ -20,7 +20,7 @@ class _SplashscreenState extends State<Splashscreen> {
     Future.delayed(Duration(seconds: 3), (){
       if(!mounted) return;
       Navigator.pushReplacement(context,
-       MaterialPageRoute(builder: (_)=> const Signin()));
+       MaterialPageRoute(builder: (_)=> const sign_in()));
     });
   }
   
