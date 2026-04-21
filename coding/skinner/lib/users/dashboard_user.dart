@@ -1,7 +1,8 @@
-/*import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:skinner/sign_in.dart';
+
+import 'package:skinner/authuntication/signin.dart';
 
 class DashboardUser extends StatefulWidget {
   const DashboardUser({super.key});
@@ -37,7 +38,7 @@ Widget _buildSelectionCard(
             backgroundColor: color.withOpacity(0.15),
             child: Icon(icon, color: color, size: 28),
           ),
-          const SizedBox(height: 10),
+           SizedBox(height: 10),
           Text(
             title,
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -52,6 +53,12 @@ Widget _buildSelectionCard(
   );
 }
 
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    throw UnimplementedError();
+  }}/*
+}
 Future<void> _pickImageFromGallery() async {
   final ImagePicker picker = ImagePicker();
   final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -106,7 +113,7 @@ _buildSelectionCard(
                       width: 36,
                       height: 36,
                     ),
-                    const SizedBox(width: 10),
+                     SizedBox(width: 10),
                     const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -233,7 +240,7 @@ _buildSelectionCard(
                 size: 16,
                 color: isActive ? Colors.black87 : Colors.grey,
               ),
-              const SizedBox(width: 6),
+               SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
@@ -265,12 +272,12 @@ _buildSelectionCard(
             'Upload Skin Image',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 4),
+           SizedBox(height: 4),
           const Text(
             'Take a clear photo or upload an image of the affected area for AI analysis',
             style: TextStyle(color: Colors.grey, fontSize: 13),
           ),
-          const SizedBox(height: 16),
+           SizedBox(height: 16),
 
           // Instruction Box
           Container(
@@ -318,14 +325,14 @@ _buildSelectionCard(
             Icons.cloud_upload_outlined,
             'Upload from Device',
             'Click to browse files',
-            Colors.blue
+            Colors.blue,
           ),
            SizedBox(height: 12),
           _buildSelectionCard(
             Icons.camera_alt_outlined,
             'Take Photo',
             'Use your camera',
-            Colors.green
+            Colors.green,
           ),
 
            SizedBox(height: 12),
