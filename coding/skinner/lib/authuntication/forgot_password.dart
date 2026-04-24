@@ -75,7 +75,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/images/Group 1000002806.png',
+                    'assets/photo.png',
                     width: 55,
                     height: 55,
                   ),

@@ -109,7 +109,7 @@ class _RegisterState extends State<Register> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Image.asset(
-                          'assets/images/Group 1000002806.png',
+                          'assets/photo.png',
                           width: 55,
                           height: 55,
                         ),
@@ -505,7 +505,7 @@ class _RegisterState extends State<Register> {
                                 GestureDetector(
                                   onTap: () => {Navigator.of(context).pushAndRemoveUntil(
                                     MaterialPageRoute(
-                                      builder: (_) => sign_in(),
+                                      builder: (_) => SignIn(),
                                     ),(route) => false,)},
                                   child: const Text(
                                     'Sign in here',

@@ -201,7 +201,7 @@ class _DashboardAdminState extends State<dashboard_admin> {
                   const Spacer(),
                   OutlinedButton.icon(
                     onPressed: () {Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => sign_in()),
+                      MaterialPageRoute(builder: (_) => SignIn()),
                           (route) => false,
                     );},
                     icon: const Icon(
