@@ -6,6 +6,7 @@ import 'package:skinner/authuntication/forgot_password.dart';
 import 'package:skinner/users/dashboard_admin.dart';
 import 'package:skinner/users/dashboard_doctor.dart';
 import 'package:skinner/users/dashboard_user.dart';
+import 'package:skinner/services/auth_service.dart';
 
 class SignIn extends StatefulWidget {
   const SignIn({super.key});
@@ -33,6 +34,10 @@ class _SignInState extends State<SignIn> {
 
   final TextEditingController passwordController =
       TextEditingController();
+  
+  final AuthService authService = AuthService();
+
+    bool isLoading = false;
 
   @override
   void dispose() {
@@ -42,43 +47,60 @@ class _SignInState extends State<SignIn> {
   }
 
   /// Navigation حسب الـ Role
-  void _navigateBasedOnRole() {
+  /// Navigation حسب الـ Role
+void _navigateBasedOnRole() {
 
-    if (_selectedRole == 'Administrator') {
+  if (_selectedRole == 'Administrator') {
 
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) => const dashboard_admin(),
-        ),
-        (route) => false,
-      );
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const dashboard_admin(),
+      ),
+      (route) => false,
+    );
 
-    }
-
-    else if (_selectedRole == 'Doctor') {
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) =>
-              const DoctorPortalScreen(),
-        ),
-        (route) => false,
-      );
-
-    }
-
-    else {
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) =>
-              const DashboardUser(),
-        ),
-        (route) => false,
-      );
-
-    }
   }
+
+  else if (_selectedRole == 'Doctor') {
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) =>
+            const DoctorPortalScreen(),
+      ),
+      (route) => false,
+    );
+
+  }
+
+  else {
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) =>
+            const DashboardUser(),
+      ),
+      (route) => false,
+    );
+
+  }
+}
+
+/// تحويل الـ Role للـ API
+String getApiRole() {
+
+  switch (_selectedRole) {
+
+    case 'Doctor':
+      return 'doctor';
+
+    case 'Administrator':
+      return 'admin';
+
+    default:
+      return 'patient';
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -382,17 +404,72 @@ class _SignInState extends State<SignIn> {
                             ),
                           ),
 
-                          onPressed:
-                              _navigateBasedOnRole,
+                          onPressed: () async {
 
-                          child: const Text(
-                            'Sign In',
+  setState(() {
+    isLoading = true;
+  });
 
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
+  try {
+
+    final response = await authService.login(
+
+      email: emailController.text.trim(),
+
+      password: passwordController.text.trim(),
+
+      role: getApiRole(),
+
+    );
+
+    print(response.data);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+
+      const SnackBar(
+        content: Text('Login Success'),
+      ),
+
+    );
+
+    _navigateBasedOnRole();
+
+  }
+
+  catch (e) {
+
+    ScaffoldMessenger.of(context).showSnackBar(
+
+      SnackBar(
+        content: Text('Login Failed: $e'),
+      ),
+
+    );
+
+  }
+
+  finally {
+
+    setState(() {
+      isLoading = false;
+    });
+
+  }
+},
+
+                         child: isLoading
+    ? const CircularProgressIndicator(
+        color: Colors.white,
+      )
+    : const Text(
+        'Sign In',
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.white,
+        ),
+      ),
+
+                            
                         ),
                       ),
 
