@@ -3,6 +3,8 @@ import 'package:camera/camera.dart';
 import 'package:skinner/authuntication/signin.dart';
 import 'dart:io';
 
+import 'package:skinner/services/auth_service.dart';
+
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -20,6 +22,9 @@ class _RegisterState extends State<Register> {
 
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
+  final AuthService authService = AuthService();
+
+   bool isLoading = false;
   bool _cameraInitialized = false;
 
   // Store the captured image
@@ -44,6 +49,14 @@ final TextEditingController specializationController =
     TextEditingController();
 
 final TextEditingController clinicAddressController =
+    TextEditingController();
+    final TextEditingController ageController =
+    TextEditingController();
+
+final TextEditingController addressController =
+    TextEditingController();
+
+final TextEditingController inviteCodeController =
     TextEditingController();
 
   final List<String> _roles = ['Patient', 'Doctor', 'Admin'];
@@ -401,6 +414,7 @@ final TextEditingController clinicAddressController =
                           // Age
                           _buildLabel('Age'),
                           _buildTextField(
+                             controller: ageController,
                               hintText:
                               _selectedRole == 'Patient' ? '25' : '35'),
                           const SizedBox(height: 16),
@@ -434,6 +448,7 @@ final TextEditingController clinicAddressController =
                             const SizedBox(height: 16),
                             _buildLabel('Admin Authorization Code'),
                             _buildTextField(
+                              controller: inviteCodeController,
                                 hintText:
                                 'Enter your admin authorization code'),
                             Padding(
@@ -450,7 +465,9 @@ final TextEditingController clinicAddressController =
                           // Patient address
                           if (_selectedRole == 'Patient') ...[
                             _buildLabel('Address'),
-                            _buildTextField(hintText: 'Enter your address'),
+                            _buildTextField(
+                              controller: addressController,
+                              hintText: 'Enter your address'),
                             const SizedBox(height: 16),
                           ],
 
@@ -514,14 +531,171 @@ final TextEditingController clinicAddressController =
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              onPressed: () {},
-                              child: Text(
-                                'Register as $_selectedRole',
-                                style: const TextStyle(
-                                    fontSize: 16, color: Colors.white),
-                              ),
-                            ),
-                          ),
+                             onPressed: () async {
+
+  setState(() {
+    isLoading = true;
+  });
+
+  try {
+
+    /// Doctor
+    if (_selectedRole == 'Doctor') {
+
+      if (_capturedImage == null) {
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+
+          const SnackBar(
+            content: Text(
+                'Please upload ID image'),
+          ),
+
+        );
+
+        setState(() {
+          isLoading = false;
+        });
+
+        return;
+      }
+
+      await authService.registerDoctor(
+
+        name: nameController.text.trim(),
+
+        email: emailController.text.trim(),
+
+        password:
+            passwordController.text.trim(),
+
+        phone: phoneController.text.trim(),
+
+        specialization:
+            specializationController.text
+                .trim(),
+
+        clinicAddress:
+            clinicAddressController.text
+                .trim(),
+
+        yearsOfExperience:
+            experienceController.text
+                .trim(),
+
+        syndicateCardImage:
+            File(_capturedImage!.path),
+
+      );
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        const SnackBar(
+          content:
+              Text('Doctor Registered'),
+        ),
+
+      );
+    }
+
+    /// Patient
+    else if (_selectedRole == 'Patient') {
+
+      await authService.registerPatient(
+
+        name: nameController.text.trim(),
+
+        email: emailController.text.trim(),
+
+        password:
+            passwordController.text.trim(),
+
+        phone: phoneController.text.trim(),
+
+        address:
+            addressController.text.trim(),
+
+        age: ageController.text.trim(),
+
+      );
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        const SnackBar(
+          content:
+              Text('Patient Registered'),
+        ),
+
+      );
+    }
+
+    /// Admin
+    else {
+
+      await authService.registerAdmin(
+
+        email: emailController.text.trim(),
+
+        password:
+            passwordController.text.trim(),
+
+        inviteCode:
+            inviteCodeController.text
+                .trim(),
+
+      );
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        const SnackBar(
+          content:
+              Text('Admin Registered'),
+        ),
+
+      );
+    }
+  }
+
+  catch (e) {
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+
+      SnackBar(
+        content: Text('$e'),
+      ),
+
+    );
+
+  }
+
+  finally {
+
+    setState(() {
+      isLoading = false;
+    });
+
+  }
+},
+                            child: isLoading
+
+    ? const CircularProgressIndicator(
+        color: Colors.white,
+      )
+
+    : Text(
+        'Register as $_selectedRole',
+
+        style: const TextStyle(
+          fontSize: 16,
+          color: Colors.white,
+        ),
+      ),
+                          ),),
                           const SizedBox(height: 16),
 
                           // Sign in link

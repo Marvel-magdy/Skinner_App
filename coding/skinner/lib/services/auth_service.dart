@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import 'dart:io';
 
+String? adminToken;
 class AuthService {
+  
 
   final Dio dio = Dio(
 
@@ -18,26 +20,32 @@ class AuthService {
 
   Future<Response> login({
 
-    required String email,
-    required String password,
-    required String role,
+  required String email,
+  required String password,
+  required String role,
 
-  }) async {
+}) async {
 
-    return await dio.post(
+  Response response = await dio.post(
 
-      '/api/auth/login',
+    '/api/auth/login',
 
-      data: {
+    data: {
 
-        "role": role,
-        "email": email,
-        "password": password,
+      "role": role,
+      "email": email,
+      "password": password,
 
-      },
+    },
 
-    );
-  }
+  );
+
+  adminToken = response.data["token"];
+
+  print(adminToken);
+
+  return response;
+}
 
 Future<Response> registerDoctor({
 
@@ -84,9 +92,124 @@ Future<Response> registerDoctor({
 
   return await dio.post(
 
-    '/api/auth/register/doctor',
+    '/api/auth/register-doctor',
 
     data: formData,
 
   );
-}}
+}Future<Response> registerPatient({
+
+  required String name,
+  required String email,
+  required String password,
+  required String phone,
+  required String address,
+  required String age,
+
+}) async {
+
+  return await dio.post(
+
+    '/api/auth/register-patient',
+
+    data: {
+
+      "name": name,
+
+      "phone": phone,
+
+      "gender": "male",
+
+      "email": email,
+
+      "password": password,
+
+      "age": int.tryParse(age) ?? 0,
+
+      "address": address,
+
+    },
+  );
+}
+Future<Response> registerAdmin({
+
+  required String email,
+  required String password,
+  required String inviteCode,
+
+}) async {
+
+  return await dio.post(
+
+    '/api/auth/register-admin',
+
+    data: {
+
+      "email": email,
+
+      "password": password,
+
+      "invite_code": inviteCode,
+
+    },
+  );
+}
+Future<Response> forgotPassword({
+
+  required String email,
+
+}) async {
+
+  return await dio.post(
+
+    '/api/auth/forgot-password',
+
+    data: {
+
+      "email": email,
+
+    },
+  );
+}Future<Response> resetPassword({
+
+  required String email,
+  required String otp,
+  required String newPassword,
+
+}) async {
+
+  return await dio.post(
+
+    '/api/auth/reset-password',
+
+    data: {
+
+      "email": email,
+
+      "otp": otp,
+
+      "new_password": newPassword,
+
+    },
+
+  );
+}
+Future<Response> getPendingDoctors() async {
+
+  return await dio.get(
+
+    '/api/admin/pending-doctors',
+
+    options: Options(
+
+      headers: {
+
+        "Authorization": "Bearer $adminToken",
+
+      },
+
+    ),
+
+  );
+}
+}

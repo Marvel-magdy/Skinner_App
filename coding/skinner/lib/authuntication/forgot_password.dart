@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:skinner/services/auth_service.dart';
+
 class ForgotPassword extends StatefulWidget {
   const ForgotPassword({super.key});
 
   @override
-  State<ForgotPassword> createState() => _ForgotPasswordState();
+  State<ForgotPassword> createState() => _ForgotPasswordState(
+    
+  );
+  
 }
 
 class _ForgotPasswordState extends State<ForgotPassword> {
@@ -22,6 +27,9 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
   TextEditingController();
+  final AuthService authService = AuthService();
+
+bool isLoading = false;
 
   // Timer
   int _timerSeconds = 554; // 9:14
@@ -221,12 +229,80 @@ class _ForgotPasswordState extends State<ForgotPassword> {
             ),
             icon: const Icon(Icons.mail_outline,
                 color: Colors.white, size: 20),
-            label: const Text('Send Verification Code',
-                style: TextStyle(fontSize: 16, color: Colors.white)),
-            onPressed: () {
-              setState(() => _step = 1);
-              _startTimer();
-            },
+           label: isLoading
+
+    ? const SizedBox(
+
+        height: 20,
+        width: 20,
+
+        child: CircularProgressIndicator(
+          color: Colors.white,
+          strokeWidth: 2,
+        ),
+      )
+
+    : const Text(
+
+        'Send Verification Code',
+
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.white,
+        ),
+      ),
+            onPressed: () async {
+
+  setState(() {
+    isLoading = true;
+  });
+
+  try {
+
+    await authService.forgotPassword(
+
+      email: _emailController.text.trim(),
+
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+
+      const SnackBar(
+        content: Text(
+          'Verification code sent successfully',
+        ),
+      ),
+
+    );
+
+    setState(() => _step = 1);
+
+    _startTimer();
+
+  }
+
+  catch (e) {
+
+    ScaffoldMessenger.of(context).showSnackBar(
+
+      SnackBar(
+        content: Text(
+          'Failed: $e',
+        ),
+      ),
+
+    );
+
+  }
+
+  finally {
+
+    setState(() {
+      isLoading = false;
+    });
+
+  }
+},
           ),
         ),
         const SizedBox(height: 16),
@@ -589,9 +665,69 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 color: Colors.white, size: 20),
             label: const Text('Reset Password',
                 style: TextStyle(fontSize: 16, color: Colors.white)),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: () async {
+
+  if (_newPasswordController.text !=
+      _confirmPasswordController.text) {
+
+    ScaffoldMessenger.of(context).showSnackBar(
+
+      const SnackBar(
+        content: Text(
+          'Passwords do not match',
+        ),
+      ),
+
+    );
+
+    return;
+  }
+
+  try {
+
+    String otpCode = _otpControllers
+        .map((e) => e.text)
+        .join();
+
+    await authService.resetPassword(
+
+      email: _emailController.text.trim(),
+
+      otp: otpCode,
+
+      newPassword:
+          _newPasswordController.text.trim(),
+
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+
+      const SnackBar(
+        content: Text(
+          'Password reset successful',
+        ),
+      ),
+
+    );
+
+    Navigator.pop(context);
+
+  }
+
+  catch (e) {
+
+    ScaffoldMessenger.of(context).showSnackBar(
+
+      SnackBar(
+        content: Text(
+          'Reset failed: $e',
+        ),
+      ),
+
+    );
+
+  }
+},
           ),
         ),
         const SizedBox(height: 16),
