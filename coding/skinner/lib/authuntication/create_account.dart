@@ -25,6 +25,26 @@ class _RegisterState extends State<Register> {
   // Store the captured image
   XFile? _capturedImage;
   final TextEditingController _scanIdController = TextEditingController();
+  final TextEditingController nameController =
+    TextEditingController();
+
+final TextEditingController emailController =
+    TextEditingController();
+
+final TextEditingController phoneController =
+    TextEditingController();
+
+final TextEditingController passwordController =
+    TextEditingController();
+
+final TextEditingController experienceController =
+    TextEditingController();
+
+final TextEditingController specializationController =
+    TextEditingController();
+
+final TextEditingController clinicAddressController =
+    TextEditingController();
 
   final List<String> _roles = ['Patient', 'Doctor', 'Admin'];
 
@@ -356,6 +376,7 @@ class _RegisterState extends State<Register> {
                           // Full Name
                           _buildLabel('Full Name'),
                           _buildTextField(
+                            controller: nameController,
                               hintText: _selectedRole == 'Patient'
                                   ? 'John Doe'
                                   : 'Dr. Jane Smith'),
@@ -364,6 +385,7 @@ class _RegisterState extends State<Register> {
                           // Email
                           _buildLabel('Email'),
                           _buildTextField(
+                            controller: emailController,
                               hintText: _selectedRole == 'Patient'
                                   ? 'name@example.com'
                                   : 'doctor@hospital.com'),
@@ -371,7 +393,9 @@ class _RegisterState extends State<Register> {
 
                           // Phone
                           _buildLabel('Phone Number'),
-                          _buildTextField(hintText: '+1 (555) 000-0000'),
+                          _buildTextField(
+                            controller: phoneController,
+                            hintText: '+1 (555) 000-0000'),
                           const SizedBox(height: 16),
 
                           // Age
@@ -395,7 +419,10 @@ class _RegisterState extends State<Register> {
                             _buildDropdownField(hint: 'Select specialization'),
                             const SizedBox(height: 16),
                             _buildLabel('Years of Experience'),
-                            _buildTextField(hintText: 'like : 2 years'),
+                            
+                            _buildTextField(
+                              controller: experienceController,
+                              hintText: 'like : 2 years'),
                             const SizedBox(height: 16),
                           ],
 
@@ -430,9 +457,11 @@ class _RegisterState extends State<Register> {
                           // Password
                           _buildLabel('Password'),
                           _buildPasswordField(
+                            controller: passwordController,
                             obscure: _obscurePassword,
                             onToggle: () => setState(
-                                    () => _obscurePassword = !_obscurePassword),
+                                    () => _obscurePassword = 
+                                       !_obscurePassword),
                           ),
                           const SizedBox(height: 16),
 
@@ -714,19 +743,35 @@ class _RegisterState extends State<Register> {
     );
   }
 
-  Widget _buildTextField({required String hintText}) {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: hintText,
-        filled: true,
-        fillColor: const Color(0xFFF5F5F5),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide.none,
-        ),
+  Widget _buildTextField({
+
+  required String hintText,
+
+  TextEditingController? controller,
+
+}) {
+
+  return TextField(
+
+    controller: controller,
+
+    decoration: InputDecoration(
+
+      hintText: hintText,
+
+      filled: true,
+
+      fillColor: const Color(0xFFF5F5F5),
+
+      border: OutlineInputBorder(
+
+        borderRadius: BorderRadius.circular(10),
+
+        borderSide: BorderSide.none,
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildDropdownField({required String hint}) {
     return Container(
@@ -747,8 +792,12 @@ class _RegisterState extends State<Register> {
   }
 
   Widget _buildPasswordField(
-      {required bool obscure, required VoidCallback onToggle}) {
+      {required bool obscure,
+       required VoidCallback onToggle,
+       TextEditingController? controller,
+      }) {
     return TextField(
+      controller: controller,
       obscureText: obscure,
       decoration: InputDecoration(
         filled: true,
