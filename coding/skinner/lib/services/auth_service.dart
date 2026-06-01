@@ -194,22 +194,265 @@ Future<Response> forgotPassword({
 
   );
 }
-Future<Response> getPendingDoctors() async {
+
+Future<Response> getPendingDoctors({
+  required String token,
+}) async {
 
   return await dio.get(
 
     '/api/admin/pending-doctors',
 
     options: Options(
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    ),
+  );
+}
+Future<Response> approveDoctor({
+
+  required String token,
+  required String medicalId,
+
+}) async {
+
+  return await dio.post(
+
+    '/api/admin/approve-doctor',
+
+    data: {
+      "medical_syndicate_id_card": medicalId,
+    },
+
+    options: Options(
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    ),
+  );
+}
+Future<Response> rejectDoctor({
+
+  required String token,
+  required String medicalId,
+
+}) async {
+
+  return await dio.post(
+
+    '/api/admin/reject-doctor',
+
+    data: {
+      "medical_syndicate_id_card": medicalId,
+    },
+
+    options: Options(
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    ),
+  );
+}
+Future<Response> getReports({
+
+  required String token,
+
+}) async {
+
+  return await dio.get(
+
+    '/api/admin/reports',
+
+    options: Options(
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    ),
+  );
+}
+Future<Response> generateAdminCode({
+
+  required String token,
+
+}) async {
+
+  return await dio.post(
+
+    '/api/admin/generate-admin-code',
+
+    options: Options(
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    ),
+  );
+}
+Future<Response> getPendingCases({
+
+  required String token,
+
+}) async {
+
+  return await dio.get(
+
+    '/api/doctor/pending-cases',
+
+    options: Options(
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    ),
+  );
+}
+Future<Response> getReviewedCases({
+
+  required String token,
+
+}) async {
+
+  return await dio.get(
+
+    '/api/doctor/reviewed-cases',
+
+    options: Options(
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    ),
+  );
+}
+Future<Response> reviewCase({
+
+  required String token,
+  required String appointmentId,
+  required String diagnosis,
+  required String prescription,
+  required String notes,
+
+}) async {
+
+  return await dio.post(
+
+    '/api/doctor/review-case',
+
+    data: {
+
+      "appointment_id": appointmentId,
+
+      "diagnosis": diagnosis,
+
+      "prescription": prescription,
+
+      "notes": notes,
+
+    },
+
+    options: Options(
 
       headers: {
 
-        "Authorization": "Bearer $adminToken",
+        "Authorization": "Bearer $token",
 
       },
 
     ),
 
+  );
+}
+Future<Response> getAvailability({
+
+  required String token,
+  required String startDate,
+  required String endDate,
+
+}) async {
+
+  return await dio.get(
+
+    '/api/doctor/date-availability',
+
+    queryParameters: {
+
+      "start_date": startDate,
+      "end_date": endDate,
+
+    },
+
+    options: Options(
+
+      headers: {
+
+        "Authorization": "Bearer $token",
+
+      },
+
+    ),
+  );
+}
+
+Future<Response> setAvailability({
+
+  required String token,
+  required String date,
+  required String startTime,
+  required String endTime,
+
+}) async {
+
+  return await dio.put(
+
+    '/api/doctor/date-availability',
+
+    data: {
+
+      "date": date,
+
+      "slots": [
+
+        {
+
+          "start_time": startTime,
+          "end_time": endTime,
+
+        }
+
+      ]
+
+    },
+
+    options: Options(
+
+      headers: {
+
+        "Authorization": "Bearer $token",
+
+      },
+
+    ),
+  );
+}
+
+Future<Response> deleteAvailability({
+
+  required String token,
+  required String date,
+
+}) async {
+
+  return await dio.delete(
+
+    '/api/doctor/date-availability/$date',
+
+    options: Options(
+
+      headers: {
+
+        "Authorization": "Bearer $token",
+
+      },
+
+    ),
   );
 }
 }

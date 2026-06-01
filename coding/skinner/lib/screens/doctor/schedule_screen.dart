@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-// تأكد من صحة هذه المسارات في مشروعك
-import 'package:skinner/screens/chat_screens.dart'; 
-import 'package:skinner/widgets/appoitment_item.dart';
+import 'package:skinner/services/auth_service.dart';
+
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -10,19 +9,65 @@ class ScheduleScreen extends StatefulWidget {
   @override
   State<ScheduleScreen> createState() => _ScheduleScreenState();
 }
-
+TimeOfDay? startTime;
+TimeOfDay? endTime;
 class _ScheduleScreenState extends State<ScheduleScreen> {
   DateTime _focusedDay = DateTime(2026, 2, 10);
   DateTime? _selectedDay = DateTime(2026, 2, 10);
+List availability = [];
 
+bool isLoadingAvailability = true;
+@override
+void initState() {
+  super.initState();
+  loadAvailability();
+}
+
+Future<void> loadAvailability() async {
+
+  try {
+
+    final response =
+        await AuthService()
+            .getAvailability(
+
+      token: adminToken!,
+
+      startDate: "2026-06-01",
+
+      endDate: "2026-06-30",
+
+    );
+
+    setState(() {
+
+      availability =
+          response.data["data"];
+
+      isLoadingAvailability =
+          false;
+
+    });
+
+  } catch (e) {
+
+    print(e);
+
+    setState(() {
+
+      isLoadingAvailability =
+          false;
+
+    });
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // الخلفية الرمادية الفاتحة جداً
+      backgroundColor: const Color(0xFFF8F9FA), 
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         children: [
-          /// --- 1. Doctor Information Card ---
           _buildCustomCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,8 +100,195 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Available Times", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-                const SizedBox(height: 15),
+Row(
+  mainAxisAlignment:
+      MainAxisAlignment.spaceBetween,
+
+  children: [
+
+    const Text(
+      "Available Times",
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 17,
+      ),
+    ),
+
+    IconButton(
+onPressed: () {
+
+  showDialog(
+
+    context: context,
+
+    builder: (context) {
+
+      return StatefulBuilder(
+
+        builder: (context, setDialogState) {
+
+          return AlertDialog(
+
+            title: const Text(
+              "Add Availability",
+            ),
+
+            content: Column(
+
+              mainAxisSize:
+                  MainAxisSize.min,
+
+              children: [
+
+                ElevatedButton(
+
+                  onPressed: () async {
+
+                    final picked =
+                        await showTimePicker(
+
+                      context: context,
+
+                      initialTime:
+                          TimeOfDay.now(),
+                    );
+
+                    if (picked != null) {
+
+                      setDialogState(() {
+
+                        startTime =
+                            picked;
+
+                      });
+                    }
+                  },
+
+                  child: Text(
+
+                    startTime == null
+
+                        ? "Select Start Time"
+
+                        : startTime!
+                            .format(context),
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 10,
+                ),
+
+                ElevatedButton(
+
+                  onPressed: () async {
+
+                    final picked =
+                        await showTimePicker(
+
+                      context: context,
+
+                      initialTime:
+                          TimeOfDay.now(),
+                    );
+
+                    if (picked != null) {
+
+                      setDialogState(() {
+
+                        endTime =
+                            picked;
+
+                      });
+                    }
+                  },
+
+                  child: Text(
+
+                    endTime == null
+
+                        ? "Select End Time"
+
+                        : endTime!
+                            .format(context),
+                  ),
+                ),
+              ],
+            ),
+
+            actions: [
+
+              TextButton(
+
+                onPressed: () {
+
+                  Navigator.pop(
+                    context,
+                  );
+                },
+
+                child: const Text(
+                  "Cancel",
+                ),
+              ),
+
+              ElevatedButton(
+
+                onPressed: () async {
+
+                  if (startTime ==
+                          null ||
+                      endTime ==
+                          null) {
+                    return;
+                  }
+
+                  await AuthService()
+                      .setAvailability(
+
+                    token:
+                        adminToken!,
+
+                    date:
+                        _selectedDay!
+                            .toString()
+                            .substring(
+                                0,
+                                10),
+
+                    startTime:
+                        "${startTime!.hour.toString().padLeft(2, '0')}:${startTime!.minute.toString().padLeft(2, '0')}",
+
+                    endTime:
+                        "${endTime!.hour.toString().padLeft(2, '0')}:${endTime!.minute.toString().padLeft(2, '0')}",
+                  );
+
+                  Navigator.pop(
+                    context,
+                  );
+
+                  loadAvailability();
+                },
+
+                child: const Text(
+                  "Save",
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+},
+
+      icon: const Icon(
+        Icons.add_circle,
+        color: Color(0xFF2C67FF),
+      ),
+    ),
+  ],
+),                const SizedBox(height: 15),
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -65,9 +297,52 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                _buildAvailableTimeRow("Sun : Wed", "7 Am : 10 Am"),
-                const Divider(height: 25, color: Color(0xFFF0F0F0)),
-                _buildAvailableTimeRow("Thu :", "3 pm : 6 pm\n9 Am : 10 Am"),
+                if (isLoadingAvailability)
+
+  const Center(
+    child: CircularProgressIndicator(),
+  )
+
+else if (availability.isEmpty)
+
+  const Text(
+    "No available times",
+    style: TextStyle(
+      color: Colors.grey,
+    ),
+  )
+
+else
+
+  Column(
+    children: availability.map((item) {
+
+      return Column(
+
+        children: [
+
+          _buildAvailableTimeRow(
+
+            item["available_date"]
+                .toString()
+                .substring(0, 10),
+
+            "${item["start_time"]}"
+            " - "
+            "${item["end_time"]}",
+
+          ),
+
+          const Divider(
+            height: 25,
+            color: Color(0xFFF0F0F0),
+          ),
+
+        ],
+      );
+
+    }).toList(),
+  ),
               ],
             ),
           ),
@@ -122,30 +397,23 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 
                 const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Divider()),
 
-                const Text("Appointments", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 12),
-
-                // المواعيد (تأكد من وجود Widgets الخاصة بك)
-                const AppointmentItem(title: "Follow-up Consultation", time: "February 10, 2026 • 10:00 AM"),
-                const AppointmentItem(title: "Skin Check", time: "February 15, 2026 • 2:30 PM"),
-                const AppointmentItem(title: "Treatment Review", time: "February 20, 2026 • 11:00 AM"),
-
+               
                 const SizedBox(height: 30),
 
                 /// --- Chat Button ---
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatScreen())),
-                    icon: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 20),
-                    label: const Text("Chat with This Patient", style: TextStyle(color: Colors.white, fontSize: 16)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2C67FF),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
-                    ),
-                  ),
+                 // child: ElevatedButton.icon(
+                 //   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatScreen())),
+                  //  icon: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 20),
+                    //label: const Text("Chat with This Patient", style: TextStyle(color: Colors.white, fontSize: 16)),
+                   // style: ElevatedButton.styleFrom(
+                   //   backgroundColor: const Color(0xFF2C67FF),
+                   //   padding: const EdgeInsets.symmetric(vertical: 16),
+                    //  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    //  elevation: 0,
+                  //  ),
+                 // ),
                 ),
               ],
             ),

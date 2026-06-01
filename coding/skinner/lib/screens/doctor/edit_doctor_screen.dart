@@ -54,7 +54,7 @@ void showEditDoctorDialog(BuildContext context) {
                     ),
                     GestureDetector(
                       onLongPress: () {
-                        Navigator.pop(context); // قفل الـ Dialog
+                        Navigator.pop(context); 
                       },
                       child: Container(
                         padding: const EdgeInsets.all(5),
@@ -69,10 +69,9 @@ void showEditDoctorDialog(BuildContext context) {
                   ],
                 ),
               ),
-              const Divider(color: Color(0xFFF0F0F0), thickness: 1), // خط فاصل خفيف
+              const Divider(color: Color(0xFFF0F0F0), thickness: 1), 
 
-              // --- 2. محتوى الـ Dialog (الحقول) ---
-              Flexible( // بنستخدم Flexible عشان يسمح بالـ Scrolling لو الشاشة صغيرة
+              Flexible( 
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(

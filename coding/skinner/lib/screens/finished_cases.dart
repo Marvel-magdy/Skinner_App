@@ -1,6 +1,5 @@
-/*import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
-import 'si';
 
 class FinishedCasesScreen extends StatelessWidget {
   const FinishedCasesScreen({super.key});
@@ -37,14 +36,12 @@ class FinishedCasesScreen extends StatelessWidget {
                     ],
                   ),
                   const Spacer(),
-                  // زر تسجيل الخروج مفعل الآن
                   OutlinedButton.icon(
                     onPressed: () {
-                      // كود تفعيل الخروج والعودة لصفحة اللوجين
-                      // نقوم بمسح كل الـ stack لضمان عدم العودة للخلف بعد الخروج
+                     
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (context) => const Scaffold(body: Center(child: Text("Login Screen")))), // استبدلي هذا بـ LoginScreen() الخاصة بكِ
+                        MaterialPageRoute(builder: (context) => const Scaffold(body: Center(child: Text("Login Screen")))), 
                         (route) => false,
                       );
                     },
@@ -135,7 +132,6 @@ class CaseCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // صورة الحالة
           Container(
             height: 100,
             width: 100,
@@ -143,10 +139,9 @@ class CaseCard extends StatelessWidget {
               color: const Color(0xFFEBE3D5), 
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.medical_services_outlined, size: 40, color: Colors.brown), // مكان الصورة
+            child: const Icon(Icons.medical_services_outlined, size: 40, color: Colors.brown), 
           ),
           const SizedBox(width: 20),
-          // بيانات المريض
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,4 +190,4 @@ class CaseCard extends StatelessWidget {
       ),
     );
   }
-}*/
+}

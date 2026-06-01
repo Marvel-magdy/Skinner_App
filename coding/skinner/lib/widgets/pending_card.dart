@@ -1,25 +1,19 @@
 import 'package:flutter/material.dart';
 
 class PendingCard extends StatelessWidget {
+  final Map caseData;
 
-  const PendingCard({super.key});
+  const PendingCard({
+    super.key,
+    required this.caseData,
+  });
 
   @override
   Widget build(BuildContext context) {
-
-    double width =
-        MediaQuery.of(context)
-            .size
-            .width;
-
     return Container(
-
-      padding:
-          EdgeInsets.all(
-              width * 0.04),
+      padding: const EdgeInsets.all(16),
 
       decoration: BoxDecoration(
-
         color: Colors.white,
 
         borderRadius:
@@ -34,52 +28,27 @@ class PendingCard extends StatelessWidget {
       ),
 
       child: Column(
-
         crossAxisAlignment:
             CrossAxisAlignment.start,
 
         children: [
-
-          /// Image
-          ClipRRect(
-
-            borderRadius:
-                BorderRadius.circular(
-                    14),
-
-            child: Image.asset(
-
-              "assets/Container.png",
-
-              height:
-                  width * 0.40,
-
-              width:
-                  double.infinity,
-
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
           Row(
-
             mainAxisAlignment:
                 MainAxisAlignment
                     .spaceBetween,
 
             children: [
-
-              Flexible(
-
+              Expanded(
                 child: Text(
+                  "${caseData["patient_name"] ?? "Unknown"}"
+                  " • ${caseData["age"] ?? "--"} yrs"
+                  " • ${caseData["gender"] ?? "--"}",
 
-                  "John D. • 34 yrs • Male",
-
-                  style: const TextStyle(
+                  style:
+                      const TextStyle(
                     fontWeight:
                         FontWeight.w600,
+                    fontSize: 14,
                   ),
 
                   overflow:
@@ -89,7 +58,6 @@ class PendingCard extends StatelessWidget {
               ),
 
               Container(
-
                 padding:
                     const EdgeInsets
                         .symmetric(
@@ -99,7 +67,6 @@ class PendingCard extends StatelessWidget {
 
                 decoration:
                     BoxDecoration(
-
                   color:
                       Colors.orange[100],
 
@@ -109,9 +76,9 @@ class PendingCard extends StatelessWidget {
                               12),
                 ),
 
-                child:
-                    const Text(
-                        "pending"),
+                child: const Text(
+                  "pending",
+                ),
               ),
             ],
           ),
@@ -122,7 +89,6 @@ class PendingCard extends StatelessWidget {
             width: double.infinity,
 
             child: ElevatedButton(
-
               style:
                   ElevatedButton
                       .styleFrom(
@@ -137,15 +103,20 @@ class PendingCard extends StatelessWidget {
                 ),
               ),
 
-              onPressed: () {},
+              onPressed: () {
+                print(caseData);
+              },
 
               child: const Text(
                 "Review Case",
+
                 style: TextStyle(
-                    color: Colors.white),
+                  color:
+                      Colors.white,
+                ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );

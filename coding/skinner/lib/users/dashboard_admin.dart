@@ -3,6 +3,7 @@ import 'package:skinner/authuntication/signin.dart';
 import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:skinner/services/auth_service.dart';
 
 class dashboard_admin extends StatefulWidget {
   const dashboard_admin({super.key});
@@ -58,7 +59,7 @@ class _DashboardAdminState extends State<dashboard_admin> {
 
       setState(() {
 
-        _doctors = response.data['doctors'];
+        _doctors = response.data['data'];
         isLoading = false;
 
       });
@@ -498,25 +499,82 @@ class _DashboardAdminState extends State<dashboard_admin> {
 
               const SizedBox(height: 4),
 
-              Text(
-                doc['email'] ?? '',
+              Text(doc['email'] ?? ''),
 
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey,
-                ),
-              ),
+const SizedBox(height: 10),
 
-              const SizedBox(height: 2),
+Text(doc['phone'] ?? ''),
 
-              Text(
-                doc['specialization'] ?? '',
+const SizedBox(height: 10),
 
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey,
-                ),
-              ),
+Text('Specialization: ${doc['specialization'] ?? ''}'),
+
+const SizedBox(height: 10),
+
+Text('Gender: ${doc['gender'] ?? ''}'),
+
+const SizedBox(height: 10),
+
+Text('Experience: ${doc['year_of_experience'] ?? ''} years'),
+
+const SizedBox(height: 10),
+
+Text('Clinic Address: ${doc['clinic_address'] ?? ''}'),
+
+const SizedBox(height: 10),
+
+Text(
+  'Medical ID: ${doc['medical_syndicate_id_card'] ?? ''}',
+),
+
+const SizedBox(height: 20),
+              const SizedBox(height: 20),
+
+ClipRRect(
+  borderRadius: BorderRadius.circular(12),
+  
+  child: 
+  Image.network(
+  'http://187.127.227.63${doc['syndicate_card_image']}',
+  height: 250,
+  width: double.infinity,
+  fit: BoxFit.cover,
+
+  loadingBuilder: (
+    context,
+    child,
+    loadingProgress,
+  ) {
+    if (loadingProgress == null) {
+      return child;
+    }
+
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
+  },
+
+  errorBuilder: (
+    context,
+    error,
+    stackTrace,
+  ) {
+
+    print(error);
+
+    return Container(
+      height: 250,
+      color: Colors.red.shade100,
+      child: const Center(
+        child: Text(
+          'Image Error',
+        ),
+      ),
+    );
+  },
+)),
+
+const SizedBox(height: 20),
 
               const SizedBox(height: 2),
 
@@ -655,7 +713,30 @@ class _DashboardAdminState extends State<dashboard_admin> {
                       const Color(0xFF22C55E),
                     ),
 
-                    onPressed: _showDoneDialog,
+                    onPressed: () async {
+
+  try {
+
+    await AuthService().approveDoctor(
+      token: adminToken!,
+      medicalId: doc['medical_syndicate_id_card'],
+    );
+    setState(() {
+  _step = 0;
+});
+
+await getPendingDoctors();
+
+    await getPendingDoctors();
+
+    _showDoneDialog();
+
+  } catch (e) {
+
+    print(e);
+
+  }
+},
 
                     child: const Text(
                       'Approve',
@@ -677,7 +758,25 @@ class _DashboardAdminState extends State<dashboard_admin> {
                       const Color(0xFFEF4444),
                     ),
 
-                    onPressed: _showFailedDialog,
+                    onPressed: () async {
+
+  try {
+
+    await AuthService().rejectDoctor(
+
+      token: adminToken!,
+      medicalId: doc['info']!,
+
+    );
+
+    _showFailedDialog();
+
+  } catch (e) {
+
+    print(e);
+
+  }
+},
 
                     child: const Text(
                       'Reject',

@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-// تأكد أن المسار ده صحيح في مشروعك
-import 'package:skinner/authuntication/signin.dart'; 
+import 'package:skinner/authuntication/signin.dart';
+import 'package:skinner/screens/chatbot.dart';
+import 'package:skinner/screens/patient_screen.dart';
+import 'package:skinner/services/auth_service.dart'; 
+import 'package:skinner/widgets/analysis_screen.dart';
+import 'package:skinner/screens/appointment_screen.dart';
+import 'package:skinner/screens/doctors_screenp.dart';
+import 'package:dio/dio.dart';
 
 class DashboardUser extends StatefulWidget {
   const DashboardUser({super.key});
@@ -14,8 +20,12 @@ class DashboardUser extends StatefulWidget {
 class _DashboardUserState extends State<DashboardUser> {
   int _currentTabIndex = 0;
   File? _selectedImage;
+  bool showAppointmentScreen = false;
+Map<String, dynamic>? analysisResult;
+List<dynamic> analysisHistory = [];
+Map? selectedDoctor;
+final AuthService authService = AuthService();
 
-  // فانكشن اختيار صورة من المعرض
   Future<void> _pickImageFromGallery() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -27,7 +37,7 @@ class _DashboardUserState extends State<DashboardUser> {
     }
   }
 
-  // فانكشن التقاط صورة بالكاميرا
+  
   Future<void> _takePhoto() async {
     final ImagePicker picker = ImagePicker();
     final XFile? photo = await picker.pickImage(source: ImageSource.camera);
@@ -38,7 +48,74 @@ class _DashboardUserState extends State<DashboardUser> {
       print("Photo taken: ${photo.path}");
     }
   }
+Future<void> analyzeImage() async {
+  if (_selectedImage == null) return;
 
+  try {
+    FormData formData = FormData.fromMap({
+      "image": await MultipartFile.fromFile(
+        _selectedImage!.path,
+        filename: "skin_image.jpg",
+      ),
+    });
+
+    final response = await authService.dio.post(
+      "/api/analysis/upload-and-analyze",
+      data: formData,
+      options: Options(
+        headers: {
+          "Authorization": "Bearer $adminToken",
+        },
+      ),
+    );
+
+    print("ANALYSIS RESPONSE:");
+    print(response.data);
+
+    setState(() {
+      analysisResult = response.data["data"];
+      _currentTabIndex = 1;
+    });
+  } catch (e) {
+    print("ANALYSIS ERROR:");
+    print(e);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Analysis failed"),
+      ),
+    );
+  }
+}
+Future<void> getAnalysisHistory() async {
+  try {
+    final response = await authService.dio.get(
+      "/api/analysis/history",
+      options: Options(
+        headers: {
+          "Authorization": "Bearer $adminToken",
+        },
+      ),
+    );
+
+    setState(() {
+      analysisHistory = response.data["data"];
+    });
+
+    print("HISTORY LOADED");
+    print(response.data);
+    print(analysisHistory.length);
+
+  } catch (e) {
+    print("HISTORY ERROR");
+    print(e);
+  }
+}
+@override
+void initState() {
+  super.initState();
+  getAnalysisHistory();
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,40 +130,82 @@ class _DashboardUserState extends State<DashboardUser> {
 
           // Content Area
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
-                children: [
-                  _buildMainContentCard(),
-                  const SizedBox(height: 24),
-                  _buildPreviousAnalysesSection(),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
+  child: _currentTabIndex == 0
+      ? SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
           ),
+          child: Column(
+            children: [
+              _buildMainContentCard(),
+              const SizedBox(height: 24),
+              _buildPreviousAnalysesSection(),
+              const SizedBox(height: 100),
+            ],
+          ),
+        )
+      : _currentTabIndex == 1
+          ? AnalysisScreen(
+            analysisResult: analysisResult,
+              selectedImage: _selectedImage,
+            )
+      : _currentTabIndex == 2
+          ? (
+              showAppointmentScreen
+                  ? AppointmentScreen(
+                      doctor: selectedDoctor!,
+                    )
+                  : DoctorsScreen(
+                      onBookAppointment: (doctor) {
+                        setState(() {
+                          selectedDoctor = doctor;
+                          showAppointmentScreen = true;
+                        });
+                      },
+                    )
+            )
+          : const PatientScreen(),
+),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF2C67FF),
-        onPressed: () {
-          // TODO: Implement chat
-        },
-        child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+
+      floatingActionButton: SizedBox(
+  width: 70,
+  height: 70,
+  child: FloatingActionButton(
+    elevation: 6,
+    backgroundColor: Colors.transparent,
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ChatBotScreen(),
+        ),
+      );
+    },
+    child: ClipOval(
+      child: Image.asset(
+        "assets/download.png",
+        fit: BoxFit.cover,
       ),
+    ),
+  ),
+),
+
     );
   }
 
   Widget _buildHeader(BuildContext context) {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(20, 40, 20, 16), // زودت الـ top padding عشان الـ Notch
+      padding: const EdgeInsets.fromLTRB(20, 40, 20, 16), 
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              // تأكد من وجود الصورة في الـ assets
+              
               Image.asset(
                 'assets/images/Group 1000002806.png',
                 width: 36,
@@ -194,39 +313,99 @@ class _DashboardUserState extends State<DashboardUser> {
       ),
     );
   }
-
-  Widget _buildMainContentCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+  Widget _buildInstructionBox() {
+  return Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: const Color(0xFFEEF2FF),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: const Color(0xFFD1D5F0),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Upload Skin Image', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          const Text('Take a clear photo or upload an image', style: TextStyle(color: Colors.grey, fontSize: 13)),
-          const SizedBox(height: 16),
-          
-          // Instruction Box
-          _buildInstructionBox(),
-          const SizedBox(height: 16),
-
-          // عرض الصورة المختارة (اختياري)
-          if (_selectedImage != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(_selectedImage!, height: 150, width: double.infinity, fit: BoxFit.cover),
+    ),
+    child: const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.info_outline,
+              size: 16,
+              color: Color(0xFF3730A3),
+            ),
+            SizedBox(width: 8),
+            Text(
+              'For best results:',
+              style: TextStyle(
+                color: Color(0xFF3730A3),
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
               ),
             ),
+          ],
+        ),
+        SizedBox(height: 8),
+        Padding(
+          padding: EdgeInsets.only(left: 24),
+          child: Text(
+            '• Ensure good lighting\n'
+            '• Take photo perpendicular\n'
+            '• Avoid using flash',
+            style: TextStyle(
+              color: Color(0xFF3730A3),
+              fontSize: 12,
+              height: 1.6,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
-          // Upload Buttons
+ Widget _buildMainContentCard() {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.grey.shade200),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        Text(
+          _selectedImage == null
+              ? 'Upload Skin Image'
+              : 'Saved Image - Ready for Analysis',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        const SizedBox(height: 4),
+
+        Text(
+          _selectedImage == null
+              ? 'Take a clear photo or upload an image'
+              : 'Your image has been securely saved and is ready for AI analysis',
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 13,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        if (_selectedImage == null) ...[
+
+          _buildInstructionBox(),
+
+          const SizedBox(height: 16),
+
           _buildSelectionCard(
             Icons.cloud_upload_outlined,
             'Upload from Device',
@@ -234,7 +413,9 @@ class _DashboardUserState extends State<DashboardUser> {
             Colors.blue,
             _pickImageFromGallery,
           ),
+
           const SizedBox(height: 12),
+
           _buildSelectionCard(
             Icons.camera_alt_outlined,
             'Take Photo',
@@ -242,44 +423,81 @@ class _DashboardUserState extends State<DashboardUser> {
             Colors.green,
             _takePhoto,
           ),
-          const SizedBox(height: 12),
-          const Center(
-            child: Text('Supported formats: JPG, PNG • Max size: 10MB', style: TextStyle(color: Colors.grey, fontSize: 11)),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildInstructionBox() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFD1D5F0)),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.info_outline, size: 16, color: Color(0xFF3730A3)),
-              SizedBox(width: 8),
-              Text('For best results:', style: TextStyle(color: Color(0xFF3730A3), fontWeight: FontWeight.bold, fontSize: 13)),
-            ],
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 24, top: 8),
+          const SizedBox(height: 12),
+
+          const Center(
             child: Text(
-              '• Ensure good lighting\n• Take photo perpendicular\n• Avoid using flash',
-              style: TextStyle(color: Color(0xFF3730A3), fontSize: 12, height: 1.6),
+              'Supported formats: JPG, PNG • Max size: 10MB',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 11,
+              ),
+            ),
+          ),
+
+        ] else ...[
+
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.file(
+              _selectedImage!,
+              height: 320,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              onPressed: analyzeImage,
+              icon: const Icon(
+                Icons.auto_awesome,
+                color: Colors.white,
+              ),
+              label: const Text(
+                'Analyze Image with AI',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          Center(
+            child: TextButton(
+              onPressed: () {
+
+                setState(() {
+
+                  _selectedImage = null;
+
+                });
+
+              },
+              child: const Text(
+                'Choose Another Image',
+              ),
             ),
           ),
         ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 
   Widget _buildSelectionCard(IconData icon, String title, String subtitle, Color color, VoidCallback onTap) {
     return GestureDetector(
@@ -328,15 +546,33 @@ class _DashboardUserState extends State<DashboardUser> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildAnalysisResultCard('Eczema', '12/15/2024', 'medium', Colors.orange),
-          const SizedBox(height: 10),
-          _buildAnalysisResultCard('Dermatitis', '12/10/2024', 'low', Colors.green),
+          analysisHistory.isEmpty
+    ? const Center(
+        child: Text("No analyses found"),
+      )
+    : Column(
+        children: analysisHistory.take(3).map((item) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _buildAnalysisResultCard(
+              item["skin_disease_classification"] ?? "Unknown",
+              item["created_at"]
+                  .toString()
+                  .substring(0, 10),
+              "completed",
+              Colors.green,
+                item["skin_image_upload"] ?? "",
+
+            ),
+          );
+        }).toList(),
+      ),
         ],
       ),
     );
   }
 
-  Widget _buildAnalysisResultCard(String title, String date, String risk, Color riskColor) {
+  Widget _buildAnalysisResultCard(String title, String date, String risk, Color riskColor,String imageUrl,) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -346,11 +582,30 @@ class _DashboardUserState extends State<DashboardUser> {
       ),
       child: Row(
         children: [
-          Container(
-            width: 56, height: 56,
-            decoration: BoxDecoration(color: const Color(0xFFD4C4B8), borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.image, color: Colors.grey, size: 24),
-          ),
+          ClipRRect(
+  borderRadius: BorderRadius.circular(8),
+  child: Image.network(
+    "http://187.127.227.63$imageUrl",
+    width: 56,
+    height: 56,
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) {
+      return Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: const Color(0xFFD4C4B8),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Icon(
+          Icons.image,
+          color: Colors.grey,
+          size: 24,
+        ),
+      );
+    },
+  ),
+),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -371,4 +626,38 @@ class _DashboardUserState extends State<DashboardUser> {
       ),
     );
   }
+  Widget _buildAnalysisScreen() {
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(20),
+    child: Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "AI Analysis Results",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          SizedBox(height: 20),
+
+          Text(
+            "Analysis completed successfully",
+            style: TextStyle(
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 }

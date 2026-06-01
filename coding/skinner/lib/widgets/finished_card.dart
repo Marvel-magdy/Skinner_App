@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 
 class FinishedCard extends StatelessWidget {
 
-  const FinishedCard({super.key});
+  final Map caseData;
+
+  const FinishedCard({
+    super.key,
+    required this.caseData,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -76,23 +81,32 @@ class FinishedCard extends StatelessWidget {
 
               children: [
 
-                const Text(
-                  'Mike R.',
-                  style: TextStyle(
+                Text(
+                  caseData[
+                          "patient_name"] ??
+                      "Unknown Patient",
+
+                  style:
+                      const TextStyle(
                     fontSize: 18,
                     fontWeight:
                         FontWeight.bold,
                   ),
                 ),
 
-                const Text(
-                  'Contact Dermatitis',
-                  style: TextStyle(
+                Text(
+                  caseData[
+                          "diagnosis"] ??
+                      "Reviewed Case",
+
+                  style:
+                      const TextStyle(
                     color: Colors.grey,
                   ),
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(
+                    height: 10),
 
                 Row(
 
@@ -118,25 +132,38 @@ class FinishedCard extends StatelessWidget {
                                 6),
                       ),
 
-                      child: const Text(
+                      child:
+                          const Text(
                         'Reviewed',
-                        style: TextStyle(
-                          color:
-                              Color(0xFF059669),
-                          fontSize: 12,
+
+                        style:
+                            TextStyle(
+                          color: Color(
+                              0xFF059669),
+
+                          fontSize:
+                              12,
+
                           fontWeight:
-                              FontWeight.bold,
+                              FontWeight
+                                  .bold,
                         ),
                       ),
                     ),
 
-                    const SizedBox(width: 8),
+                    const SizedBox(
+                        width: 8),
 
                     Text(
-                      '12/17/2024',
-                      style: TextStyle(
-                        color:
-                            Colors.grey[600],
+                      caseData[
+                              "reviewed_at"] ??
+                          "",
+
+                      style:
+                          TextStyle(
+                        color: Colors
+                            .grey[600],
+
                         fontSize: 12,
                       ),
                     ),

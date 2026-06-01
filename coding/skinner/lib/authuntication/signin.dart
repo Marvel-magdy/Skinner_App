@@ -7,6 +7,7 @@ import 'package:skinner/users/dashboard_admin.dart';
 import 'package:skinner/users/dashboard_doctor.dart';
 import 'package:skinner/users/dashboard_user.dart';
 import 'package:skinner/services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignIn extends StatefulWidget {
   const SignIn({super.key});
@@ -28,7 +29,6 @@ class _SignInState extends State<SignIn> {
   /// Password visibility
   bool _obscurePassword = true;
 
-  /// Controllers (مهمين للـ API بعدين)
   final TextEditingController emailController =
       TextEditingController();
 
@@ -46,8 +46,6 @@ class _SignInState extends State<SignIn> {
     super.dispose();
   }
 
-  /// Navigation حسب الـ Role
-  /// Navigation حسب الـ Role
 void _navigateBasedOnRole() {
 
   if (_selectedRole == 'Administrator') {
@@ -86,7 +84,6 @@ void _navigateBasedOnRole() {
   }
 }
 
-/// تحويل الـ Role للـ API
 String getApiRole() {
 
   switch (_selectedRole) {
@@ -423,6 +420,14 @@ String getApiRole() {
     );
 
     print(response.data);
+    final prefs = await SharedPreferences.getInstance();
+
+await prefs.setString(
+  'token',
+  response.data['token'],
+);
+
+print("TOKEN SAVED");
 
     ScaffoldMessenger.of(context).showSnackBar(
 

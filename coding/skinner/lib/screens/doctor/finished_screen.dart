@@ -1,28 +1,105 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skinner/widgets/finished_card.dart';
+import 'package:skinner/services/auth_service.dart';
 
-class FinishedScreen extends StatelessWidget {
-
+class FinishedScreen extends StatefulWidget {
   const FinishedScreen({super.key});
 
   @override
+  State<FinishedScreen> createState() =>
+      _FinishedScreenState();
+}
+
+class _FinishedScreenState
+    extends State<FinishedScreen> {
+
+  List reviewedCases = [];
+
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    getCases();
+  }
+
+  Future<void> getCases() async {
+
+    try {
+
+      SharedPreferences prefs =
+          await SharedPreferences.getInstance();
+
+      String? token =
+          prefs.getString('token');
+
+      final response =
+          await AuthService().getReviewedCases(
+        token: token!,
+      );
+
+      setState(() {
+
+        reviewedCases =
+            response.data["data"];
+
+        isLoading = false;
+
+      });
+
+    } catch (e) {
+
+      print(e);
+
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+
+    if (isLoading) {
+
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (reviewedCases.isEmpty) {
+
+      return const Center(
+        child: Text(
+          "No reviewed cases",
+          style: TextStyle(
+            fontSize: 16,
+          ),
+        ),
+      );
+    }
 
     return ListView.builder(
 
       padding: const EdgeInsets.all(16),
 
-      itemCount: 4,
+      itemCount: reviewedCases.length,
 
       itemBuilder: (context, index) {
 
-        return const Padding(
+        final caseData =
+            reviewedCases[index];
+
+        return Padding(
 
           padding:
-              EdgeInsets.only(
+              const EdgeInsets.only(
                   bottom: 12),
 
-          child: FinishedCard(),
+          child: FinishedCard(
+            caseData: caseData,
+          ),
         );
       },
     );

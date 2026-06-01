@@ -58,6 +58,9 @@ final TextEditingController addressController =
 
 final TextEditingController inviteCodeController =
     TextEditingController();
+    String? selectedGender;
+String? selectedSpecialization;
+String? selectedAddress;
 
   final List<String> _roles = ['Patient', 'Doctor', 'Admin'];
 
@@ -421,16 +424,111 @@ final TextEditingController inviteCodeController =
 
                           // Gender
                           _buildLabel('Gender'),
-                          _buildDropdownField(hint: 'Select gender'),
+
+Container(
+  decoration: BoxDecoration(
+    color: const Color(0xFFF5F5F5),
+    borderRadius: BorderRadius.circular(10),
+  ),
+  padding: const EdgeInsets.symmetric(horizontal: 16),
+  child: DropdownButton<String>(
+    value: selectedGender,
+    hint: const Text('Select gender'),
+    isExpanded: true,
+    underline: const SizedBox(),
+    items: const [
+      DropdownMenuItem(
+        value: 'male',
+        child: Text('Male'),
+      ),
+      DropdownMenuItem(
+        value: 'female',
+        child: Text('Female'),
+      ),
+    ],
+    onChanged: (value) {
+      setState(() {
+        selectedGender = value;
+      });
+    },
+  ),
+),
+
+const SizedBox(height: 16),
                           const SizedBox(height: 16),
 
                           // Doctor extra fields
                           if (_selectedRole == 'Doctor') ...[
                             _buildLabel('Clinic Address'),
-                            _buildDropdownField(hint: 'Select address'),
+                            Container(
+  decoration: BoxDecoration(
+    color: const Color(0xFFF5F5F5),
+    borderRadius: BorderRadius.circular(10),
+  ),
+  padding: const EdgeInsets.symmetric(horizontal: 16),
+  child: DropdownButton<String>(
+    value: selectedAddress,
+    hint: const Text('Select address'),
+    isExpanded: true,
+    underline: const SizedBox(),
+    items: const [
+      DropdownMenuItem(
+        value: 'Cairo',
+        child: Text('Cairo'),
+      ),
+      DropdownMenuItem(
+        value: 'Giza',
+        child: Text('Giza'),
+      ),
+      DropdownMenuItem(
+        value: 'Alexandria',
+        child: Text('Alexandria'),
+      ),
+    ],
+    onChanged: (value) {
+      setState(() {
+        selectedAddress = value;
+        clinicAddressController.text =
+            value ?? '';
+      });
+    },
+  ),
+),
                             const SizedBox(height: 16),
-                            _buildLabel('Specialization'),
-                            _buildDropdownField(hint: 'Select specialization'),
+                            Container(
+  decoration: BoxDecoration(
+    color: const Color(0xFFF5F5F5),
+    borderRadius: BorderRadius.circular(10),
+  ),
+  padding: const EdgeInsets.symmetric(horizontal: 16),
+  child: DropdownButton<String>(
+    value: selectedSpecialization,
+    hint: const Text(
+      'Select specialization',
+    ),
+    isExpanded: true,
+    underline: const SizedBox(),
+    items: const [
+      DropdownMenuItem(
+        value: 'Dermatology',
+        child: Text('Dermatology'),
+      ),
+      DropdownMenuItem(
+        value: 'Cosmetic Dermatology',
+        child: Text(
+          'Cosmetic Dermatology',
+        ),
+      ),
+    ],
+    onChanged: (value) {
+      setState(() {
+        selectedSpecialization = value;
+        specializationController.text =
+            value ?? '';
+      });
+    },
+  ),
+),
                             const SizedBox(height: 16),
                             _buildLabel('Years of Experience'),
                             

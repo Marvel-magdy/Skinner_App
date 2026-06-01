@@ -187,7 +187,7 @@ class _DoctorPortalScreenState
         children: [
 
           _tabItem(
-              "Pending Cases (2)", 0),
+              "Pending Cases ",0),
 
           const SizedBox(width: 8),
 
