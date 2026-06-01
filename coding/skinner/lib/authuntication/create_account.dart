@@ -141,10 +141,14 @@ final TextEditingController inviteCodeController =
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Image.asset(
-                          'assets/photo.png',
-                          width: 55,
-                          height: 55,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.asset(
+                            'assets/Untitled-1-01 1.png',
+                            width: 80,
+                            height: 80,
+                              fit: BoxFit.cover,
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Column(
