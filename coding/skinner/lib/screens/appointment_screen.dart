@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:skinner/screens/payment_screen.dart';
+import 'package:skinner/services/auth_service.dart';
 class AppointmentScreen extends StatefulWidget {
   final Map doctor;
+  final VoidCallback onBack;
 
   const AppointmentScreen({
     super.key,
     required this.doctor,
+        required this.onBack,
+
   });
 
   @override
@@ -15,34 +19,116 @@ class AppointmentScreen extends StatefulWidget {
 
 class _AppointmentScreenState
     extends State<AppointmentScreen> {
-  int selectedDateIndex = 3;
-  int selectedTimeIndex = 1;
+  int selectedDateIndex = 0;
+  int selectedTimeIndex = 0;
+  List dates = [];
 
-  final List<Map<String, String>> dates = [
-    {"day": "Today", "date": "4", "month": "Feb"},
-    {"day": "Thu", "date": "5", "month": "Feb"},
-    {"day": "Fri", "date": "6", "month": "Feb"},
-    {"day": "Sat", "date": "7", "month": "Feb"},
-    {"day": "Sun", "date": "8", "month": "Feb"},
-    {"day": "Mon", "date": "9", "month": "Feb"},
-    {"day": "Tue", "date": "10", "month": "Feb"},
-  ];
+bool isLoadingDates = true;
 
-  final List<Map<String, dynamic>> times = [
-  {"time": "09:00 AM", "available": true},
-  {"time": "09:30 AM", "available": true},
-  {"time": "10:00 AM", "available": false},
-  {"time": "10:30 AM", "available": false},
-  {"time": "11:00 AM", "available": true},
-  {"time": "11:30 AM", "available": true},
-  {"time": "02:00 PM", "available": true},
-  {"time": "02:30 PM", "available": false},
-  {"time": "03:00 PM", "available": true},
-  {"time": "03:30 PM", "available": true},
-];
+  List times = [];
+  bool isLoadingSlots = false;
+@override
+void initState() {
 
+  super.initState();
+
+  getDates();
+}
+Future<void> getDates() async {
+
+
+  try {
+
+    final response =
+        await AuthService()
+            .getAvailableDates(
+
+      token: adminToken!,
+
+      doctorId: widget.doctor[
+          "medical_syndicate_id_card"],
+
+    );
+
+    setState(()  {
+
+      dates =
+          response.data["data"];
+          
+          
+          print(dates);
+
+      isLoadingDates = false;
+
+    });
+    if (dates.isNotEmpty) {
+      print("CALLING GET SLOTS");
+  await getSlots(
+    dates[0]["date"],
+  );
+}
+
+  } catch (e) {
+
+    print(e);
+
+    setState(() {
+
+      isLoadingDates = false;
+
+    });
+  }
+}
+Future<void> getSlots(String date) async {
+print("GET SLOTS STARTED");
+  try {
+
+    setState(() {
+      isLoadingSlots = true;
+    });
+
+    final response =
+        await AuthService()
+            .getAvailableSlots(
+
+      token: adminToken!,
+
+      doctorId: widget.doctor[
+          "medical_syndicate_id_card"],
+
+      date: date,
+    );
+    print("SLOTS RESPONSE:");
+print(response.data);
+
+print("TIMES:");
+print(response.data["slots"]);
+
+    setState(() {
+
+      times =
+          response.data["slots"];
+
+      isLoadingSlots = false;
+
+      selectedTimeIndex = 0;
+
+    });
+
+  } catch (e) {
+
+    print(e);
+
+    setState(() {
+
+      isLoadingSlots = false;
+
+    });
+  }
+}
   @override
   Widget build(BuildContext context) {
+    print(times);
     return Container(
       color: const Color(0xFFF8FAFC),
       child: SingleChildScrollView(
@@ -51,21 +137,25 @@ class _AppointmentScreenState
           children: [
 
             /// Back
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Row(
-                children: const [
-                  Icon(Icons.arrow_back, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    "Back to Doctors",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          Align(
+  alignment: Alignment.centerLeft,
+  child: GestureDetector(
+    onTap: widget.onBack,
+    child: const Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.arrow_back, size: 18),
+        SizedBox(width: 8),
+        Text(
+          "Back to Doctors",
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    ),
+  ),
+),
 
             const SizedBox(height: 20),
 
@@ -82,17 +172,23 @@ class _AppointmentScreenState
               child: Row(
                 children: [
 
-                  const CircleAvatar(
-                    radius: 28,
-                    backgroundColor: Color(0xFFDDEAFE),
-                    child: Text(
-                      "DSJ",
-                      style: TextStyle(
-                        color: Color(0xFF2563EB),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                   CircleAvatar(
+  radius: 28,
+  backgroundColor: const Color(0xFFDDEAFE),
+  child: Text(
+    widget.doctor["name"]
+        .toString()
+        .split(" ")
+        .take(2)
+        .map((e) => e[0])
+        .join()
+        .toUpperCase(),
+    style: const TextStyle(
+      color: Color(0xFF2563EB),
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+),
 
                   const SizedBox(width: 12),
 
@@ -170,7 +266,7 @@ class _AppointmentScreenState
                       const SizedBox(height: 16),
 
                       Text(
-                        '\$${widget.doctor["fee"]}',
+                        '\$${widget.doctor["consultation_fee"]}',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight:
@@ -178,8 +274,8 @@ class _AppointmentScreenState
                         ),
                       ),
 
-                      const Text(
-                        "consultation fee",
+                       Text(
+                       ' \$${widget.doctor["consultation_fee"]}',
                         style: TextStyle(
                           color: Colors.grey,
                           fontSize: 10,
@@ -252,9 +348,13 @@ Container(
 
           return GestureDetector(
             onTap: () {
-              setState(() {
-                selectedDateIndex = index;
-              });
+             setState(() {
+  selectedDateIndex = index;
+});
+
+getSlots(
+  dates[index]["date"],
+);
             },
             child: Container(
               decoration: BoxDecoration(
@@ -272,32 +372,34 @@ Container(
                     MainAxisAlignment.center,
                 children: [
 
-                  Text(
-                    dates[index]["day"]!,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                    ),
-                  ),
+  Text(
+    dates[index]["day_name"] ?? "",
+    style: const TextStyle(
+      color: Colors.grey,
+    ),
+  ),
 
-                  const SizedBox(height: 6),
+  const SizedBox(height: 6),
 
-                  Text(
-                    dates[index]["date"]!,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
+  Text(
+    dates[index]["date"]
+        .toString()
+        .substring(8, 10),
+    style: const TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.bold,
+    ),
+  ),
 
-                  Text(
-                    dates[index]["month"]!,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
+  Text(
+    dates[index]["date"]
+        .toString()
+        .substring(5, 7),
+    style: const TextStyle(
+      color: Colors.grey,
+    ),
+  ),
+],)
             ),
           );
         },
@@ -364,15 +466,22 @@ Container(
 
           bool selected =
               selectedTimeIndex == index;
-              bool available =
-                   times[index]["available"];
+             bool available =
+    times[index]["status"] ==
+        "available";
 
           return GestureDetector(
-            onTap: () {
-              setState(() {
-                selectedTimeIndex = index;
-              });
-            },
+           onTap: () {
+
+  if (times[index]["status"] !=
+      "available") {
+    return;
+  }
+
+  setState(() {
+    selectedTimeIndex = index;
+  });
+},
             child: Container(
   alignment: Alignment.center,
   decoration: BoxDecoration(
@@ -392,28 +501,25 @@ Container(
         MainAxisAlignment.center,
     children: [
 
-      Text(
-        times[index]["time"],
-        style: TextStyle(
-          color: available
-              ? Colors.black
-              : Colors.grey,
-        ),
-      ),
+     Text(
+  times[index]["time"]?.toString() ?? "",
+  style: TextStyle(
+    color: available
+        ? Colors.black
+        : Colors.grey,
+  ),
+),
 
       const SizedBox(height: 4),
-
-      Text(
-        available
-            ? "Available"
-            : "Unavailable",
-        style: TextStyle(
-          fontSize: 11,
-          color: available
-              ? Colors.green
-              : Colors.red,
-        ),
-      ),
+Text(
+  times[index]["status"]?.toString() ?? "",
+  style: TextStyle(
+    fontSize: 11,
+    color: available
+        ? Colors.green
+        : Colors.red,
+  ),
+),
     ],
   ),
 ),
@@ -475,26 +581,30 @@ Container(
           ),
           const SizedBox(width: 10),
           Text(
-  times[selectedTimeIndex]["time"],
+  times.isNotEmpty
+      ? times[selectedTimeIndex]["time"]
+            ?.toString() ??
+          ""
+      : "No Time Selected",
 ),
         ],
       ),
 
       const SizedBox(height: 12),
 
-      const Row(
+      Row(
         crossAxisAlignment:
             CrossAxisAlignment.start,
         children: [
-          Icon(
+          const Icon(
             Icons.location_on_outlined,
             size: 18,
             color: Color(0xFF2C67FF),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
-              "In-person at Medical Center Downtown",
+             widget.doctor["clinic_address"] ?? "No Address"
             ),
           ),
         ],
@@ -503,7 +613,7 @@ Container(
       const SizedBox(height: 12),
 
       Text(
-        '\$${widget.doctor["fee"]} consultation fee',
+        ' \$${widget.doctor["consultation_fee"]}',
         style: const TextStyle(
           fontWeight: FontWeight.bold,
         ),

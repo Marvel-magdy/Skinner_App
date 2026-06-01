@@ -129,7 +129,7 @@ void initState() {
           _buildTabBar(),
 
           // Content Area
-          Expanded(
+         Expanded(
   child: _currentTabIndex == 0
       ? SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
@@ -147,7 +147,7 @@ void initState() {
         )
       : _currentTabIndex == 1
           ? AnalysisScreen(
-            analysisResult: analysisResult,
+              analysisResult: analysisResult,
               selectedImage: _selectedImage,
             )
       : _currentTabIndex == 2
@@ -155,6 +155,12 @@ void initState() {
               showAppointmentScreen
                   ? AppointmentScreen(
                       doctor: selectedDoctor!,
+                      onBack: () {
+                        setState(() {
+                          showAppointmentScreen = false;
+                          selectedDoctor = null;
+                        });
+                      },
                     )
                   : DoctorsScreen(
                       onBookAppointment: (doctor) {
@@ -166,10 +172,7 @@ void initState() {
                     )
             )
           : const PatientScreen(),
-),
-        ],
-      ),
-
+        ),]),
       floatingActionButton: SizedBox(
   width: 70,
   height: 70,
@@ -195,7 +198,6 @@ void initState() {
 
     );
   }
-
   Widget _buildHeader(BuildContext context) {
     return Container(
       color: Colors.white,

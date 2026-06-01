@@ -455,4 +455,63 @@ Future<Response> deleteAvailability({
     ),
   );
 }
+Future getDoctors({
+  required String token,
+}) async {
+
+  return await dio.get(
+
+    "/api/doctors",
+
+    options: Options(
+      headers: {
+        "Authorization":
+            "Bearer $token",
+      },
+    ),
+  );
+}
+Future getAvailableDates({
+  required String token,
+  required String doctorId,
+}) async {
+
+  return await dio.get(
+
+    "/api/doctors/$doctorId/available-dates",
+
+    queryParameters: {
+      "days": 7,
+    },
+
+    options: Options(
+      headers: {
+        "Authorization": "Bearer $token",
+      },
+    ),
+  );
+}
+Future<Response> getAvailableSlots({
+
+  required String token,
+  required String doctorId,
+  required String date,
+
+}) async {
+
+  return await dio.get(
+
+    "/api/doctors/$doctorId/available-slots",
+
+    queryParameters: {
+      "date": date,
+    },
+
+    options: Options(
+      headers: {
+        "Authorization": "Bearer $token",
+      },
+    ),
+  );
+}
 }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:skinner/screens/appointment_screen.dart';
+import 'package:skinner/services/auth_service.dart';
 
-class DoctorsScreen extends StatelessWidget {
+class DoctorsScreen extends StatefulWidget {
   final Function(Map doctor) onBookAppointment;
 
   const DoctorsScreen({
@@ -10,33 +11,57 @@ class DoctorsScreen extends StatelessWidget {
   });
 
   @override
+  State<DoctorsScreen> createState() => _DoctorsScreenState();
+}
+
+class _DoctorsScreenState extends State<DoctorsScreen> {
+  List doctors = [];
+bool isLoading = true;
+@override
+void initState() {
+  super.initState();
+  getDoctors();
+}
+
+Future<void> getDoctors() async {
+
+  try {
+
+    final response =
+        await AuthService()
+            .getDoctors(
+
+      token: adminToken!,
+    );
+
+    setState(() {
+
+      doctors =
+          response.data["data"];
+
+      isLoading = false;
+
+    });
+
+  } catch (e) {
+
+    print(e);
+
+    setState(() {
+
+      isLoading = false;
+
+    });
+  }
+}
+  @override
   Widget build(BuildContext context) {
-    final doctors = [
-      {
-        "name": "Dr. Sarah Johnson",
-        "specialization": "Dermatology",
-        "rating": "4.9",
-        "reviews": "324",
-        "experience": "15",
-        "fee": "150",
-      },
-      {
-        "name": "Dr. Michael Brown",
-        "specialization": "Dermatology",
-        "rating": "4.8",
-        "reviews": "280",
-        "experience": "12",
-        "fee": "120",
-      },
-      {
-        "name": "Dr. Emily Wilson",
-        "specialization": "Dermatology",
-        "rating": "4.7",
-        "reviews": "210",
-        "experience": "10",
-        "fee": "100",
-      },
-    ];
+if (isLoading) {
+
+  return const Center(
+    child: CircularProgressIndicator(),
+  );
+}   
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -68,7 +93,7 @@ class DoctorsScreen extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 20),
 child: DoctorCard(
   doctor: doctor,
-  onBookAppointment: onBookAppointment,
+  onBookAppointment: widget.onBookAppointment,
 ),            ),
           ),
         ],
@@ -103,18 +128,23 @@ class DoctorCard extends StatelessWidget {
          Row(
   crossAxisAlignment: CrossAxisAlignment.start,
   children: [
-    CircleAvatar(
-      radius: 38,
-      backgroundColor: const Color(0xFFDDEAFE),
-      child: const Text(
-        "DSJ",
-        style: TextStyle(
-          color: Color(0xFF2563EB),
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+   CircleAvatar(
+  radius: 38,
+  backgroundColor: const Color(0xFFDDEAFE),
+  child: Text(
+    doctor["name"] != null &&
+            doctor["name"].toString().isNotEmpty
+        ? doctor["name"]
+            .toString()[0]
+            .toUpperCase()
+        : "D",
+    style: const TextStyle(
+      color: Color(0xFF2563EB),
+      fontWeight: FontWeight.bold,
+      fontSize: 24,
     ),
-
+  ),
+),
     const SizedBox(width: 12),
 
     Expanded(
@@ -175,7 +205,7 @@ class DoctorCard extends StatelessWidget {
     const SizedBox(width: 6),
     Expanded(
       child: Text(
-        '${doctor["rating"]} (${doctor["reviews"]} reviews)',
+        'no rated yet',
         overflow: TextOverflow.ellipsis,
       ),
     ),
@@ -193,8 +223,8 @@ class DoctorCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                '${doctor["experience"]} years experience',
-              ),
+  '${doctor["year_of_experience"] ?? 0} years experience',
+),
             ],
           ),
 
@@ -210,7 +240,7 @@ class DoctorCard extends StatelessWidget {
     const SizedBox(width: 6),
     Expanded(
       child: Text(
-        "Medical Center Downtown",
+        doctor["clinic_address"] ?? "No Address",
         overflow: TextOverflow.ellipsis,
       ),
     ),
@@ -246,23 +276,18 @@ class DoctorCard extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          const Text(
-            "Consultation Fee",
-            style: TextStyle(
-              color: Colors.grey,
-            ),
-          ),
+          Text(
+  '\$${doctor["consultation_fee"] ?? "0"}',
+  style: const TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    color: Color(0xFF2563EB),
+  ),
+),
 
           const SizedBox(height: 6),
 
-          Text(
-            '\$${doctor["fee"]}',
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2563EB),
-            ),
-          ),
+      
 
           const SizedBox(height: 20),
 

@@ -17,27 +17,26 @@ class SignIn extends StatefulWidget {
 }
 
 class _SignInState extends State<SignIn> {
-
   /// Role
   String _selectedRole = 'Patient';
-  final List<String> _roles = [
-    'Patient',
-    'Doctor',
-    'Administrator'
-  ];
+  final List<String> _roles = ['Patient', 'Doctor', 'Administrator'];
 
   /// Password visibility
   bool _obscurePassword = true;
 
+<<<<<<< HEAD
   final TextEditingController emailController =
       TextEditingController();
+=======
+  /// Controllers (مهمين للـ API بعدين)
+  final TextEditingController emailController = TextEditingController();
 
-  final TextEditingController passwordController =
-      TextEditingController();
-  
+  final TextEditingController passwordController = TextEditingController();
+>>>>>>> 731f4660a57c1a1b8f5aa9434e4d5858e63fa344
+
   final AuthService authService = AuthService();
 
-    bool isLoading = false;
+  bool isLoading = false;
 
   @override
   void dispose() {
@@ -46,6 +45,7 @@ class _SignInState extends State<SignIn> {
     super.dispose();
   }
 
+<<<<<<< HEAD
 void _navigateBasedOnRole() {
 
   if (_selectedRole == 'Administrator') {
@@ -57,20 +57,44 @@ void _navigateBasedOnRole() {
       (route) => false,
     );
 
+=======
+  /// Navigation حسب الـ Role
+  /// Navigation حسب الـ Role
+  void _navigateBasedOnRole() {
+    if (_selectedRole == 'Administrator') {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const dashboard_admin()),
+        (route) => false,
+      );
+    } else if (_selectedRole == 'Doctor') {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const DoctorPortalScreen()),
+        (route) => false,
+      );
+    } else {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const DashboardUser()),
+        (route) => false,
+      );
+    }
+>>>>>>> 731f4660a57c1a1b8f5aa9434e4d5858e63fa344
   }
 
-  else if (_selectedRole == 'Doctor') {
+  /// تحويل الـ Role للـ API
+  String getApiRole() {
+    switch (_selectedRole) {
+      case 'Doctor':
+        return 'doctor';
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) =>
-            const DoctorPortalScreen(),
-      ),
-      (route) => false,
-    );
+      case 'Administrator':
+        return 'admin';
 
+      default:
+        return 'patient';
+    }
   }
 
+<<<<<<< HEAD
   else {
 
     Navigator.of(context).pushAndRemoveUntil(
@@ -99,54 +123,43 @@ String getApiRole() {
   }
 }
 
+=======
+>>>>>>> 731f4660a57c1a1b8f5aa9434e4d5858e63fa344
   @override
   Widget build(BuildContext context) {
-
-    final width =
-        MediaQuery.of(context).size.width;
+    final width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-
       body: SafeArea(
         child: SingleChildScrollView(
-
           child: Column(
             children: [
-
               /// Logo
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 40,
                 ),
 
                 child: Row(
                   children: [
-
-                    Image.asset(
-                      'assets/photo.png',
-                      width:55,
-                      height:55,
-                    ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                child: Image.asset('assets/Untitled-1-01 1.png', width: 80, height: 80, fit: BoxFit.cover)),
 
                     const SizedBox(width: 14),
 
                     Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
 
                       children: const [
-
                         Text(
                           'Skinner',
 
                           style: TextStyle(
                             fontSize: 28,
-                            fontWeight:
-                                FontWeight.bold,
-                            color:
-                                Color(0xFF2C67FF),
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C67FF),
                           ),
                         ),
 
@@ -155,8 +168,7 @@ String getApiRole() {
 
                           style: TextStyle(
                             fontSize: 14,
-                            color:
-                                Color(0xFF2C67FF),
+                            color: Color(0xFF2C67FF),
                           ),
                         ),
                       ],
@@ -167,48 +179,38 @@ String getApiRole() {
 
               /// Card
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(
-                        horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
 
                 child: Container(
-
-                  padding:
-                      const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
 
                   decoration: BoxDecoration(
                     color: Colors.white,
 
-                    borderRadius:
-                        BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(20),
 
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black
-                            .withOpacity(0.08),
+                        color: Colors.black.withOpacity(0.08),
 
                         blurRadius: 20,
 
-                        offset:
-                            const Offset(0, 4),
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
 
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
 
                     children: [
-
                       /// Title
                       const Text(
                         'Sign In',
 
                         style: TextStyle(
                           fontSize: 22,
-                          fontWeight:
-                              FontWeight.bold,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
 
@@ -217,10 +219,7 @@ String getApiRole() {
                       const Text(
                         'Enter your credentials to access your account',
 
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
                       ),
 
                       const SizedBox(height: 24),
@@ -228,56 +227,39 @@ String getApiRole() {
                       /// Role Dropdown
                       const Text(
                         'I am a',
-                        style: TextStyle(
-                          fontWeight:
-                              FontWeight.w500,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.w500),
                       ),
 
                       const SizedBox(height: 8),
 
                       Container(
-                        padding:
-                            const EdgeInsets.symmetric(
-                                horizontal: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
 
                         decoration: BoxDecoration(
-                          color:
-                              const Color(0xFFF5F5F5),
+                          color: const Color(0xFFF5F5F5),
 
-                          borderRadius:
-                              BorderRadius.circular(
-                                  10),
+                          borderRadius: BorderRadius.circular(10),
                         ),
 
                         child: DropdownButton<String>(
-
                           value: _selectedRole,
 
                           isExpanded: true,
 
-                          underline:
-                              const SizedBox(),
+                          underline: const SizedBox(),
 
-                          items:
-                              _roles.map((role) {
-
+                          items: _roles.map((role) {
                             return DropdownMenuItem(
-
                               value: role,
 
                               child: Text(role),
                             );
-
                           }).toList(),
 
                           onChanged: (value) {
-
                             setState(() {
-                              _selectedRole =
-                                  value!;
+                              _selectedRole = value!;
                             });
-
                           },
                         ),
                       ),
@@ -290,30 +272,19 @@ String getApiRole() {
                       const SizedBox(height: 8),
 
                       TextField(
-                        controller:
-                            emailController,
+                        controller: emailController,
 
-                        decoration:
-                            InputDecoration(
-
-                          hintText:
-                              'name@example.com',
+                        decoration: InputDecoration(
+                          hintText: 'name@example.com',
 
                           filled: true,
 
-                          fillColor:
-                              const Color(
-                                  0xFFF5F5F5),
+                          fillColor: const Color(0xFFF5F5F5),
 
-                          border:
-                              OutlineInputBorder(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
 
-                            borderRadius:
-                                BorderRadius.circular(
-                                    10),
-
-                            borderSide:
-                                BorderSide.none,
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
@@ -326,53 +297,32 @@ String getApiRole() {
                       const SizedBox(height: 8),
 
                       TextField(
+                        controller: passwordController,
 
-                        controller:
-                            passwordController,
+                        obscureText: _obscurePassword,
 
-                        obscureText:
-                            _obscurePassword,
-
-                        decoration:
-                            InputDecoration(
-
+                        decoration: InputDecoration(
                           filled: true,
 
-                          fillColor:
-                              const Color(
-                                  0xFFF5F5F5),
+                          fillColor: const Color(0xFFF5F5F5),
 
-                          border:
-                              OutlineInputBorder(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
 
-                            borderRadius:
-                                BorderRadius.circular(
-                                    10),
-
-                            borderSide:
-                                BorderSide.none,
+                            borderSide: BorderSide.none,
                           ),
 
-                          suffixIcon:
-                              IconButton(
-
+                          suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
-                                  ? Icons
-                                      .visibility_off_outlined
-                                  : Icons
-                                      .visibility_outlined,
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
                             ),
 
                             onPressed: () {
-
                               setState(() {
-
-                                _obscurePassword =
-                                    !_obscurePassword;
-
+                                _obscurePassword = !_obscurePassword;
                               });
-
                             },
                           ),
                         ),
@@ -386,37 +336,47 @@ String getApiRole() {
                         height: 50,
 
                         child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
 
-                          style:
-                              ElevatedButton.styleFrom(
-
-                            backgroundColor:
-                                Colors.black,
-
-                            shape:
-                                RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(
-                                      12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
 
                           onPressed: () async {
+                            setState(() {
+                              isLoading = true;
+                            });
 
-  setState(() {
-    isLoading = true;
-  });
+                            try {
+                              final response = await authService.login(
+                                email: emailController.text.trim(),
 
-  try {
+                                password: passwordController.text.trim(),
 
-    final response = await authService.login(
+                                role: getApiRole(),
+                              );
 
-      email: emailController.text.trim(),
+                              print(response.data);
 
-      password: passwordController.text.trim(),
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Login Success')),
+                              );
 
-      role: getApiRole(),
+                              _navigateBasedOnRole();
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Login Failed: $e')),
+                              );
+                            } finally {
+                              setState(() {
+                                isLoading = false;
+                              });
+                            }
+                          },
 
+<<<<<<< HEAD
     );
 
     print(response.data);
@@ -475,6 +435,19 @@ print("TOKEN SAVED");
       ),
 
                             
+=======
+                          child: isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : const Text(
+                                  'Sign In',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+>>>>>>> 731f4660a57c1a1b8f5aa9434e4d5858e63fa344
                         ),
                       ),
 
@@ -482,38 +455,26 @@ print("TOKEN SAVED");
 
                       /// Register
                       Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
 
                         children: [
-
-                          const Text(
-                            "Don't have an account? ",
-                          ),
+                          const Text("Don't have an account? "),
 
                           GestureDetector(
-
                             onTap: () {
-
                               Navigator.push(
                                 context,
 
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      Register(),
-                                ),
+                                MaterialPageRoute(builder: (_) => Register()),
                               );
-
                             },
 
                             child: const Text(
                               'Register here',
 
                               style: TextStyle(
-                                color:
-                                    Color(0xFF2C67FF),
-                                fontWeight:
-                                    FontWeight.w600,
+                                color: Color(0xFF2C67FF),
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -525,27 +486,20 @@ print("TOKEN SAVED");
                       /// Forgot Password
                       Center(
                         child: GestureDetector(
-
                           onTap: () {
-
                             Navigator.push(
                               context,
 
                               MaterialPageRoute(
-                                builder: (_) =>
-                                    ForgotPassword(),
+                                builder: (_) => ForgotPassword(),
                               ),
                             );
-
                           },
 
                           child: const Text(
                             'Forgot password?',
 
-                            style: TextStyle(
-                              color:
-                                  Color(0xFF2C67FF),
-                            ),
+                            style: TextStyle(color: Color(0xFF2C67FF)),
                           ),
                         ),
                       ),

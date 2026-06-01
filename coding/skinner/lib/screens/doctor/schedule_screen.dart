@@ -12,8 +12,11 @@ class ScheduleScreen extends StatefulWidget {
 TimeOfDay? startTime;
 TimeOfDay? endTime;
 class _ScheduleScreenState extends State<ScheduleScreen> {
-  DateTime _focusedDay = DateTime(2026, 2, 10);
-  DateTime? _selectedDay = DateTime(2026, 2, 10);
+ DateTime _focusedDay =
+    DateTime.now();
+
+DateTime? _selectedDay =
+    DateTime.now();
 List availability = [];
 
 bool isLoadingAvailability = true;
@@ -323,16 +326,83 @@ else
 
           _buildAvailableTimeRow(
 
-            item["available_date"]
-                .toString()
-                .substring(0, 10),
+  item["available_date"]
+      .toString()
+      .substring(0, 10),
 
-            "${item["start_time"]}"
-            " - "
-            "${item["end_time"]}",
+  "${item["start_time"]}"
+  " - "
+  "${item["end_time"]}",
 
+  () async {
+
+  final confirm =
+      await showDialog<bool>(
+
+    context: context,
+
+    builder: (context) =>
+        AlertDialog(
+
+      title: const Text(
+        "Delete Availability",
+      ),
+
+      content: const Text(
+        "Are you sure you want to delete this availability?",
+      ),
+
+      actions: [
+
+        TextButton(
+
+          onPressed: () {
+
+            Navigator.pop(
+              context,
+              false,
+            );
+          },
+
+          child: const Text(
+            "Cancel",
           ),
+        ),
 
+        ElevatedButton(
+
+          onPressed: () {
+
+            Navigator.pop(
+              context,
+              true,
+            );
+          },
+
+          child: const Text(
+            "Delete",
+          ),
+        ),
+      ],
+    ),
+  );
+
+  if (confirm != true) {
+    return;
+  }
+
+  await AuthService()
+      .deleteAvailability(
+
+    token: adminToken!,
+
+    date: item["available_date"]
+        .toString()
+        .substring(0, 10),
+  );
+
+  loadAvailability();
+},),
           const Divider(
             height: 25,
             color: Color(0xFFF0F0F0),
@@ -362,12 +432,20 @@ else
                   lastDay: DateTime.utc(2030, 12, 31),
                   focusedDay: _focusedDay,
                   selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                  onDaySelected: (selectedDay, focusedDay) {
-                    setState(() {
-                      _selectedDay = selectedDay;
-                      _focusedDay = focusedDay;
-                    });
-                  },
+                 onDaySelected: (
+  selectedDay,
+  focusedDay,
+) {
+
+  print(selectedDay);
+
+  setState(() {
+
+    _selectedDay = selectedDay;
+    _focusedDay = focusedDay;
+
+  });
+},
                   headerStyle: const HeaderStyle(
                     formatButtonVisible: false,
                     titleCentered: false,
@@ -451,15 +529,44 @@ else
     );
   }
 
-  Widget _buildAvailableTimeRow(String day, String time) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(day, style: const TextStyle(fontSize: 15)),
-        Text(time, textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold, height: 1.4)),
-      ],
-    );
-  }
+  Widget _buildAvailableTimeRow(
+  String day,
+  String time,
+  VoidCallback onDelete,
+) {
+  return Row(
+    children: [
+
+      Expanded(
+        child: Text(
+          day,
+          style: const TextStyle(
+            fontSize: 15,
+          ),
+        ),
+      ),
+
+      Expanded(
+        child: Text(
+          time,
+          textAlign: TextAlign.right,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            height: 1.4,
+          ),
+        ),
+      ),
+
+      IconButton(
+        onPressed: onDelete,
+        icon: const Icon(
+          Icons.delete_outline,
+          color: Colors.red,
+        ),
+      ),
+    ],
+  );
+}
 
   Widget _buildLegendItem(Color color, String label) {
     return Row(
