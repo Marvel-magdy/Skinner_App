@@ -78,13 +78,13 @@ if (isLoading) {
 
           const SizedBox(height: 8),
 
-          const Text(
+         /* const Text(
             'Based on your diagnosis of "Eczema (Atopic Dermatitis)", we recommend these verified dermatology specialists',
             style: TextStyle(
               color: Colors.grey,
               height: 1.5,
             ),
-          ),
+          ),*/
 
           const SizedBox(height: 20),
 

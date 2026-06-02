@@ -24,15 +24,11 @@ class _SignInState extends State<SignIn> {
   /// Password visibility
   bool _obscurePassword = true;
 
-<<<<<<< HEAD
   final TextEditingController emailController =
       TextEditingController();
-=======
   /// Controllers (مهمين للـ API بعدين)
-  final TextEditingController emailController = TextEditingController();
 
   final TextEditingController passwordController = TextEditingController();
->>>>>>> 731f4660a57c1a1b8f5aa9434e4d5858e63fa344
 
   final AuthService authService = AuthService();
 
@@ -45,19 +41,8 @@ class _SignInState extends State<SignIn> {
     super.dispose();
   }
 
-<<<<<<< HEAD
-void _navigateBasedOnRole() {
 
-  if (_selectedRole == 'Administrator') {
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => const dashboard_admin(),
-      ),
-      (route) => false,
-    );
-
-=======
   /// Navigation حسب الـ Role
   /// Navigation حسب الـ Role
   void _navigateBasedOnRole() {
@@ -77,7 +62,7 @@ void _navigateBasedOnRole() {
         (route) => false,
       );
     }
->>>>>>> 731f4660a57c1a1b8f5aa9434e4d5858e63fa344
+//>>>>>>> 731f4660a57c1a1b8f5aa9434e4d5858e63fa344
   }
 
   /// تحويل الـ Role للـ API
@@ -94,37 +79,8 @@ void _navigateBasedOnRole() {
     }
   }
 
-<<<<<<< HEAD
-  else {
+ 
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) =>
-            const DashboardUser(),
-      ),
-      (route) => false,
-    );
-
-  }
-}
-
-String getApiRole() {
-
-  switch (_selectedRole) {
-
-    case 'Doctor':
-      return 'doctor';
-
-    case 'Administrator':
-      return 'admin';
-
-    default:
-      return 'patient';
-  }
-}
-
-=======
->>>>>>> 731f4660a57c1a1b8f5aa9434e4d5858e63fa344
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -328,128 +284,64 @@ String getApiRole() {
                         ),
                       ),
 
-                      const SizedBox(height: 24),
-
-                      /// Sign In Button
                       SizedBox(
-                        width: double.infinity,
-                        height: 50,
-
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-
-                          onPressed: () async {
-                            setState(() {
-                              isLoading = true;
-                            });
-
-                            try {
-                              final response = await authService.login(
-                                email: emailController.text.trim(),
-
-                                password: passwordController.text.trim(),
-
-                                role: getApiRole(),
-                              );
-
-                              print(response.data);
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Login Success')),
-                              );
-
-                              _navigateBasedOnRole();
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Login Failed: $e')),
-                              );
-                            } finally {
-                              setState(() {
-                                isLoading = false;
-                              });
-                            }
-                          },
-
-<<<<<<< HEAD
-    );
-
-    print(response.data);
-    final prefs = await SharedPreferences.getInstance();
-
-await prefs.setString(
-  'token',
-  response.data['token'],
-);
-
-print("TOKEN SAVED");
-
-    ScaffoldMessenger.of(context).showSnackBar(
-
-      const SnackBar(
-        content: Text('Login Success'),
+  width: double.infinity,
+  height: 50,
+  child: ElevatedButton(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.black,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
+    ),
+    onPressed: () async {
+      setState(() {
+        isLoading = true;
+      });
 
-    );
+      try {
+        final response = await authService.login(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+          role: getApiRole(),
+        );
 
-    _navigateBasedOnRole();
+        print(response.data);
 
-  }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Login Success'),
+          ),
+        );
 
-  catch (e) {
-
-    ScaffoldMessenger.of(context).showSnackBar(
-
-      SnackBar(
-        content: Text('Login Failed: $e'),
-      ),
-
-    );
-
-  }
-
-  finally {
-
-    setState(() {
-      isLoading = false;
-    });
-
-  }
-},
-
-                         child: isLoading
-    ? const CircularProgressIndicator(
-        color: Colors.white,
-      )
-    : const Text(
-        'Sign In',
-        style: TextStyle(
-          fontSize: 16,
-          color: Colors.white,
-        ),
-      ),
-
-                            
-=======
-                          child: isLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
-                                )
-                              : const Text(
-                                  'Sign In',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
->>>>>>> 731f4660a57c1a1b8f5aa9434e4d5858e63fa344
-                        ),
-                      ),
+        _navigateBasedOnRole();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Login Failed: $e'),
+          ),
+        );
+      } finally {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    },
+    child: isLoading
+        ? const CircularProgressIndicator(
+            color: Colors.white,
+          )
+        : const Text(
+            'Sign In',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+            ),
+          ),
+  ),
+),
+                  
+                  
 
                       const SizedBox(height: 16),
 
@@ -500,17 +392,18 @@ print("TOKEN SAVED");
                             'Forgot password?',
 
                             style: TextStyle(color: Color(0xFF2C67FF)),
-                          ),
+                                                   ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+                      // GestureDetector
+                    ), // Center
+                  ],
+                ), // Column
+              ), // Container
+            ), // Padding
+          ],
+        ), // Column
+      ), // SingleChildScrollView
+    ), // SafeArea
+  );
+}
 }
