@@ -431,11 +431,24 @@ class _DashboardAdminState extends State<dashboard_admin> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 16,
-              ),
+            Container(
+  width: double.infinity,
+
+  padding: const EdgeInsets.symmetric(
+    horizontal: 20,
+    vertical: 16,
+  ),
+
+  decoration: const BoxDecoration(
+    color: Color(0xFFFCFAFF),
+
+    border: Border(
+      bottom: BorderSide(
+        color: Color(0xFFE7D8FF),
+      ),
+    ),
+  ),
+
               child: Row(
                 children: [
                   Container(
