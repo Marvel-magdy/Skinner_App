@@ -214,6 +214,7 @@ Future<Response> approveDoctor({
 
   required String token,
   required String medicalId,
+  required String notes,
 
 }) async {
 
@@ -223,6 +224,8 @@ Future<Response> approveDoctor({
 
     data: {
       "medical_syndicate_id_card": medicalId,
+        "notes": notes,
+
     },
 
     options: Options(
@@ -236,6 +239,9 @@ Future<Response> rejectDoctor({
 
   required String token,
   required String medicalId,
+    required String notes,
+
+
 
 }) async {
 
@@ -245,6 +251,8 @@ Future<Response> rejectDoctor({
 
     data: {
       "medical_syndicate_id_card": medicalId,
+        "notes": notes,
+
     },
 
     options: Options(
@@ -510,6 +518,36 @@ Future<Response> getAvailableSlots({
     options: Options(
       headers: {
         "Authorization": "Bearer $token",
+      },
+    ),
+  );
+}
+Future<Response> getStats({
+  required String token,
+}) async {
+
+  return await dio.get(
+    '/api/admin/stats',
+    options: Options(
+      headers: {
+        'Authorization':
+            'Bearer $token',
+      },
+    ),
+  );
+}
+Future<Response> getActiveInviteCode({
+  required String token,
+}) async {
+
+  return await dio.get(
+
+    '/api/admin/active-invite-code',
+
+    options: Options(
+      headers: {
+        'Authorization':
+            'Bearer $token',
       },
     ),
   );
