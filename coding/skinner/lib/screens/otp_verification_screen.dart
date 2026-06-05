@@ -1,8 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:skinner/screens/Payment_Success_Screen.dart';
+import 'package:skinner/services/payment_service.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
-  const OtpVerificationScreen({super.key});
+  final String appointmentId;
+  final String doctorName;
+  final double consultationFee;
+  final String cardHolderName;
+  final String cardLast4;
+  final String appointmentDate;
+
+  const OtpVerificationScreen({
+    super.key,
+    required this.appointmentId,
+    required this.doctorName,
+    required this.consultationFee,
+    required this.cardHolderName,
+    required this.cardLast4,
+    required this.appointmentDate,
+  });
 
   @override
   State<OtpVerificationScreen> createState() =>
@@ -344,14 +360,49 @@ class _OtpVerificationScreenState
                       height: 55,
                       child:
                           ElevatedButton.icon(
-                        onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const PaymentSuccessScreen(),
-      ),
-    );
-  },
+                        onPressed: () async {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+
+                          try {
+                            final paymentService = PaymentService();
+                            final payResp = await paymentService.payAppointment(
+                              appointmentId: widget.appointmentId,
+                              method: 'card',
+                              cardHolderName: widget.cardHolderName,
+                              cardLast4: widget.cardLast4,
+                            );
+
+                            Navigator.pop(context); // dismiss loading
+
+                            final data = payResp['data'] ?? payResp;
+                            final chatId = data['chat_id']?.toString() ?? payResp['chat_id']?.toString();
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PaymentSuccessScreen(
+                                  chatId: chatId,
+                                  doctorName: widget.doctorName,
+                                  appointmentId: widget.appointmentId,
+                                  cardLast4: widget.cardLast4,
+                                  amount: widget.consultationFee,
+                                  appointmentDate: widget.appointmentDate,
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            Navigator.pop(context); // dismiss loading
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Payment confirmation failed: $e")),
+                            );
+                          }
+                        },
                         icon: const Icon(
                           Icons
                               .check_circle_outline,

@@ -1,27 +1,41 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:skinner/screens/doctors_screenp.dart';
+import 'package:skinner/models/analysis_result.dart';
+import 'package:intl/intl.dart';
 
 class AnalysisScreen extends StatelessWidget {
   final File? selectedImage;
-  final Map<String, dynamic>? analysisResult;
+  final AnalysisResult? analysisResult;
+  final VoidCallback? onFindDoctors; // callback to switch to Doctors tab
 
   const AnalysisScreen({
     super.key,
     required this.selectedImage,
     required this.analysisResult,
+    this.onFindDoctors,
   });
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final disease =
-    analysisResult?["predicted_class"] ??
-    "No Result";
-
-final confidence =
-    (analysisResult?["confidence"] ?? 0.0)
-        .toDouble();
+    
+    // If no analysis result, show error state
+    if (analysisResult == null) {
+      return const Center(
+        child: Text('No analysis result available'),
+      );
+    }
+    
+    final disease = analysisResult!.predictedClass;
+    final confidence = analysisResult!.confidence;
+    final confidenceLabel = analysisResult!.confidenceLabel;
+    final description = analysisResult!.description;
+    final recommendations = analysisResult!.recommendations;
+    final alternatives = analysisResult!.alternatives;
+    
+    // Format timestamp
+    final formattedDate = DateFormat('M/d/yyyy \'at\' h:mm:ss a')
+        .format(analysisResult!.analyzedAt);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -83,9 +97,9 @@ final confidence =
 
             const SizedBox(height: 4),
 
-            const Text(
-              "1/28/2026 at 2:15:05 AM",
-              style: TextStyle(
+            Text(
+              formattedDate,
+              style: const TextStyle(
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -137,22 +151,49 @@ final confidence =
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: selectedImage != null
+                  // Fresh analysis — show local file
                   ? Image.file(
                       selectedImage!,
                       height: width * 0.6,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     )
-                  : Container(
-                      height: width * 0.6,
-                      color: Colors.grey.shade200,
-                      child: const Center(
-                        child: Icon(
-                          Icons.image,
-                          size: 60,
+                  : analysisResult!.imageUrl.isNotEmpty
+                      // History item — load from network
+                      ? Image.network(
+                          'http://187.127.227.63${analysisResult!.imageUrl}',
+                          height: width * 0.6,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              height: width * 0.6,
+                              color: Colors.grey.shade200,
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                height: width * 0.6,
+                                color: Colors.grey.shade200,
+                                child: const Center(
+                                  child: Icon(Icons.broken_image_outlined,
+                                      size: 60, color: Colors.grey),
+                                ),
+                              ),
+                        )
+                      // No image at all
+                      : Container(
+                          height: width * 0.6,
+                          color: Colors.grey.shade200,
+                          child: const Center(
+                            child: Icon(Icons.image_outlined,
+                                size: 60, color: Colors.grey),
+                          ),
                         ),
-                      ),
-                    ),
             ),
 
             const SizedBox(height: 24),
@@ -224,13 +265,13 @@ final confidence =
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD1FAE5),
+                      color: _getConfidenceBgColor(confidenceLabel),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      "High Confidence",
+                    child: Text(
+                      "$confidenceLabel Confidence",
                       style: TextStyle(
-                        color: Color(0xFF059669),
+                        color: _getConfidenceTextColor(confidenceLabel),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -247,9 +288,9 @@ final confidence =
 
                   const SizedBox(height: 8),
 
-                  const Text(
-                    "Eczema is a common inflammatory skin condition characterized by dry, itchy, and inflamed skin.",
-                    style: TextStyle(height: 1.6),
+                  Text(
+                    description,
+                    style: const TextStyle(height: 1.6),
                   ),
                 ],
               ),
@@ -273,21 +314,13 @@ final confidence =
                 color: const Color(0xFFF8FAFF),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Column(
-                children: [
-                  ListTile(
-                    leading: Icon(Icons.check_circle, color: Colors.green),
-                    title: Text("Keep the affected area moisturized regularly."),
-                  ),
-                  ListTile(
-                    leading: Icon(Icons.check_circle, color: Colors.green),
-                    title: Text("Avoid harsh soaps and irritating products."),
-                  ),
-                  ListTile(
-                    leading: Icon(Icons.check_circle, color: Colors.green),
-                    title: Text("Consult a dermatologist if symptoms worsen."),
-                  ),
-                ],
+              child: Column(
+                children: recommendations.map((recommendation) {
+                  return ListTile(
+                    leading: const Icon(Icons.check_circle, color: Colors.green),
+                    title: Text(recommendation),
+                  );
+                }).toList(),
               ),
             ),
 
@@ -311,64 +344,49 @@ final confidence =
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Column(
-                children: [
-                  ListTile(
-                    title: Text("Contact Dermatitis"),
-                    trailing: Text("72%"),
-                  ),
-                  Divider(),
-                  ListTile(
-                    title: Text("Psoriasis"),
-                    trailing: Text("58%"),
-                  ),
-                ],
-              ),
+              child: alternatives.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        'No alternative detections available',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        for (int i = 0; i < alternatives.length; i++) ...[
+                          ListTile(
+                            title: Text(alternatives[i].condition),
+                            trailing: Text(
+                              "${(alternatives[i].confidence * 100).toStringAsFixed(1)}%",
+                            ),
+                          ),
+                          if (i < alternatives.length - 1) const Divider(),
+                        ],
+                      ],
+                    ),
             ),
 
             const SizedBox(height: 24),
 
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F6FF),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Next Step: Consult a Specialist",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C67FF),
-                    ),
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    "Based on your analysis results, we recommend consulting with a dermatologist specialist for a comprehensive evaluation and personalized treatment plan.",
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
+              child: ElevatedButton.icon(
+                onPressed: onFindDoctors,
+                icon: const Icon(Icons.search_rounded, color: Colors.white),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2C67FF),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 16,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text(
+                label: const Text(
                   "Find Recommended Doctors",
                   style: TextStyle(
                     color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
                   ),
                 ),
               ),
@@ -377,5 +395,33 @@ final confidence =
         ),
       ),
     );
+  }
+
+  /// Get background color for confidence badge
+  Color _getConfidenceBgColor(String label) {
+    switch (label) {
+      case 'High':
+        return const Color(0xFFD1FAE5); // green
+      case 'Medium':
+        return const Color(0xFFFEF3C7); // amber
+      case 'Low':
+        return const Color(0xFFFEE2E2); // red
+      default:
+        return const Color(0xFFF3F4F6); // gray
+    }
+  }
+
+  /// Get text color for confidence badge
+  Color _getConfidenceTextColor(String label) {
+    switch (label) {
+      case 'High':
+        return const Color(0xFF059669); // green
+      case 'Medium':
+        return const Color(0xFFD97706); // amber
+      case 'Low':
+        return const Color(0xFFDC2626); // red
+      default:
+        return const Color(0xFF6B7280); // gray
+    }
   }
 }

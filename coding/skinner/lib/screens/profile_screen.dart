@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/auth_service.dart' show adminToken;
 
 class PatientScreen extends StatefulWidget {
   const PatientScreen({super.key});
@@ -15,18 +18,127 @@ class _PatientScreenState extends State<PatientScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   bool isEditing = false;
+  bool isLoading = true;
 
-final TextEditingController nameController =
-    TextEditingController(text: "John Doe");
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
 
-final TextEditingController addressController =
-    TextEditingController(text: "Downtown");
+  final Dio _dio = Dio(BaseOptions(baseUrl: 'https://api.skinnerai.site'));
+  List<dynamic> _appointments = [];
+  bool isLoadingAppointments = true;
 
-final TextEditingController emailController =
-    TextEditingController(
-      text: "john.doe@email.com",
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+    _fetchAppointments();
+  }
+
+  Future<void> _fetchProfile() async {
+    setState(() => isLoading = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? adminToken ?? '';
+
+      final response = await _dio.get(
+        '/api/profile/me',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] ?? response.data;
+        setState(() {
+          nameController.text = data['name'] ?? "";
+          emailController.text = data['email'] ?? "";
+          addressController.text = data['address'] ?? "";
+          phoneController.text = data['phone'] ?? "";
+        });
+      } else {
+        _setFallbackData();
+      }
+    } catch (e) {
+      _setFallbackData();
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _fetchAppointments() async {
+    setState(() => isLoadingAppointments = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? adminToken ?? '';
+
+      final response = await _dio.get(
+        '/api/appointment/my',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] ?? response.data ?? [];
+        if (data is List) {
+          setState(() {
+            _appointments = data;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Failed to fetch appointments: $e");
+    } finally {
+      setState(() => isLoadingAppointments = false);
+    }
+  }
+
+  void _setFallbackData() {
+    nameController.text = "John Doe";
+    emailController.text = "john.doe@email.com";
+    addressController.text = "Downtown";
+    phoneController.text = "+1 (555) 000-0000";
+  }
+
+  Future<void> _saveProfileChanges() async {
+    // Show a loading indicator dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(child: CircularProgressIndicator()),
     );
-    void _showEditProfileDialog(BuildContext context) {
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? adminToken ?? '';
+
+      final response = await _dio.put(
+        '/api/profile/update',
+        data: {
+          'name': nameController.text,
+          'phone': phoneController.text,
+          'address': addressController.text,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      Navigator.pop(context); // Close loading dialog
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        setState(() {}); // Refresh UI with new controller values
+        Navigator.pop(context); // Close edit dialog
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to update profile")),
+        );
+      }
+    } catch (e) {
+      Navigator.pop(context); // Close loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error saving profile: $e")),
+      );
+    }
+  }
+
+  void _showEditProfileDialog(BuildContext context) {
   showDialog(
     context: context,
     barrierColor: Colors.black.withOpacity(0.4),
@@ -126,9 +238,10 @@ final TextEditingController emailController =
 
                 TextField(
                   controller: emailController,
+                  readOnly: true,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: const Color(0xFFF5F5F5),
+                    fillColor: const Color(0xFFE5E7EB),
                     border: OutlineInputBorder(
                       borderRadius:
                           BorderRadius.circular(10),
@@ -154,6 +267,7 @@ final TextEditingController emailController =
                 const SizedBox(height: 6),
 
                 TextField(
+                  controller: phoneController,
                   decoration: InputDecoration(
                     hintText: "+1 (555) 000-0000",
                     filled: true,
@@ -220,10 +334,7 @@ final TextEditingController emailController =
                             ),
                           ),
                           onPressed: () {
-                            setState(() {});
-                            Navigator.pop(
-                              context,
-                            );
+                            _saveProfileChanges();
                           },
                           child: const Text(
                             "Save Changes",
@@ -283,6 +394,14 @@ final TextEditingController emailController =
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(50.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -342,11 +461,11 @@ final TextEditingController emailController =
 
                 const SizedBox(height: 6),
 
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    "John Doe",
-                    style: TextStyle(
+                    nameController.text,
+                    style: const TextStyle(
                       fontSize: 18,
                     ),
                   ),
@@ -366,11 +485,11 @@ final TextEditingController emailController =
 
                 const SizedBox(height: 6),
 
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    "Downtown",
-                    style: TextStyle(
+                    addressController.text,
+                    style: const TextStyle(
                       fontSize: 18,
                     ),
                   ),
@@ -390,11 +509,35 @@ final TextEditingController emailController =
 
                 const SizedBox(height: 6),
 
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    emailController.text,
+                    style: const TextStyle(
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
                 const Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    "john.doe@email.com",
+                    "Phone Number",
                     style: TextStyle(
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    phoneController.text.isNotEmpty ? phoneController.text : "Not provided",
+                    style: const TextStyle(
                       fontSize: 18,
                     ),
                   ),
@@ -500,30 +643,47 @@ final TextEditingController emailController =
 
                 const SizedBox(height: 20),
 
-                _appointmentCard(
-                  title: "Follow-up Consultation",
-                  date: "February 10, 2026",
-                  time: "10:00 AM",
-                  doctor: "Dr. Karim",
-                ),
+                if (isLoadingAppointments && _appointments.isEmpty)
+                  const Center(child: CircularProgressIndicator())
+                else if (_appointments.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Text("No upcoming appointments found", style: TextStyle(color: Colors.grey)),
+                    ),
+                  )
+                else
+                  ..._appointments.take(5).map((appt) {
+                    final dateStr = appt['date']?.toString() ?? '';
+                    String displayDate = "Date not set";
+                    String displayTime = "";
+                    if (dateStr.isNotEmpty) {
+                      try {
+                        final dt = DateTime.parse(dateStr).toLocal();
+                        final months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                        final month = months[dt.month - 1];
+                        final hour = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+                        final ampm = dt.hour >= 12 ? "PM" : "AM";
+                        final minute = dt.minute.toString().padLeft(2, '0');
+                        displayDate = "$month ${dt.day}, ${dt.year}";
+                        displayTime = "${hour.toString().padLeft(2, '0')}:$minute $ampm";
+                      } catch (_) {
+                        displayDate = dateStr;
+                      }
+                    }
+                    final doctorName = appt['doctor_name']?.toString() ?? appt['doctor']?['name']?.toString() ?? "Doctor";
+                    final status = appt['status']?.toString() ?? '';
 
-                const SizedBox(height: 12),
-
-                _appointmentCard(
-                  title: "Skin Check",
-                  date: "February 15, 2026",
-                  time: "2:30 PM",
-                  doctor: "Dr. Ahmed",
-                ),
-
-                const SizedBox(height: 12),
-
-                _appointmentCard(
-                  title: "Treatment Review",
-                  date: "February 20, 2026",
-                  time: "11:00 AM",
-                  doctor: "Dr. Samir",
-                ),
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _appointmentCard(
+                        title: status.toUpperCase().replaceAll('_', ' '),
+                        date: displayDate,
+                        time: displayTime,
+                        doctor: doctorName,
+                      ),
+                    );
+                  }),
               ],
             ),
           ),

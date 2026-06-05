@@ -25,7 +25,7 @@ class _SignInState extends State<SignIn> {
   bool _obscurePassword = true;
 
   final TextEditingController emailController =
-      TextEditingController();
+  TextEditingController();
   /// Controllers (مهمين للـ API بعدين)
 
   final TextEditingController passwordController = TextEditingController();
@@ -49,17 +49,17 @@ class _SignInState extends State<SignIn> {
     if (_selectedRole == 'Administrator') {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const dashboard_admin()),
-        (route) => false,
+            (route) => false,
       );
     } else if (_selectedRole == 'Doctor') {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const DoctorPortalScreen()),
-        (route) => false,
+            (route) => false,
       );
     } else {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const DashboardUser()),
-        (route) => false,
+            (route) => false,
       );
     }
 //>>>>>>> 731f4660a57c1a1b8f5aa9434e4d5858e63fa344
@@ -79,7 +79,7 @@ class _SignInState extends State<SignIn> {
     }
   }
 
- 
+
 
   @override
   Widget build(BuildContext context) {
@@ -100,8 +100,8 @@ class _SignInState extends State<SignIn> {
                 child: Row(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                child: Image.asset('assets/Untitled-1-01 1.png', width: 80, height: 80, fit: BoxFit.cover)),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset('assets/Untitled-1-01 1.png', width: 80, height: 80, fit: BoxFit.cover)),
 
                     const SizedBox(width: 14),
 
@@ -285,63 +285,69 @@ class _SignInState extends State<SignIn> {
                       ),
 
                       SizedBox(
-  width: double.infinity,
-  height: 50,
-  child: ElevatedButton(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.black,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-    ),
-    onPressed: () async {
-      setState(() {
-        isLoading = true;
-      });
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () async {
+                            setState(() {
+                              isLoading = true;
+                            });
 
-      try {
-        final response = await authService.login(
-          email: emailController.text.trim(),
-          password: passwordController.text.trim(),
-          role: getApiRole(),
-        );
+                            try {
+                              final response = await authService.login(
+                                email: emailController.text.trim(),
+                                password: passwordController.text.trim(),
+                                role: getApiRole(),
+                              );
 
-        print(response.data);
+                              final token = response.data["token"];
+                              if (token != null) {
+                                final prefs = await SharedPreferences.getInstance();
+                                await prefs.setString('token', token);
+                              }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login Success'),
-          ),
-        );
+                              print(response.data);
 
-        _navigateBasedOnRole();
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Login Failed: $e'),
-          ),
-        );
-      } finally {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    },
-    child: isLoading
-        ? const CircularProgressIndicator(
-            color: Colors.white,
-          )
-        : const Text(
-            'Sign In',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-            ),
-          ),
-  ),
-),
-                  
-                  
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Login Success'),
+                                ),
+                              );
+
+                              _navigateBasedOnRole();
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Login Failed: $e'),
+                                ),
+                              );
+                            } finally {
+                              setState(() {
+                                isLoading = false;
+                              });
+                            }
+                          },
+                          child: isLoading
+                              ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                              : const Text(
+                            'Sign In',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+
+
 
                       const SizedBox(height: 16),
 
@@ -392,18 +398,18 @@ class _SignInState extends State<SignIn> {
                             'Forgot password?',
 
                             style: TextStyle(color: Color(0xFF2C67FF)),
-                                                   ),
+                          ),
                         ),
-                      // GestureDetector
-                    ), // Center
-                  ],
-                ), // Column
-              ), // Container
-            ), // Padding
-          ],
-        ), // Column
-      ), // SingleChildScrollView
-    ), // SafeArea
-  );
-}
+                        // GestureDetector
+                      ), // Center
+                    ],
+                  ), // Column
+                ), // Container
+              ), // Padding
+            ],
+          ), // Column
+        ), // SingleChildScrollView
+      ), // SafeArea
+    );
+  }
 }

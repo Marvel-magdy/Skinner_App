@@ -31,7 +31,8 @@ class _SplashscreenState extends State<Splashscreen> {
       body: SizedBox(
         width: double.infinity,
         height: double.infinity,
-        child: Image.asset("assets/iPhone 14 & 15 Pro Max - 1.png", fit: BoxFit.cover),
+        child: Image.asset("assets/AI Skin Disease Identification App.png",fit: BoxFit.cover,),
+        
       )
       
       

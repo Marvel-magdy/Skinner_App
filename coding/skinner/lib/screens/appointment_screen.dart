@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:skinner/screens/payment_screen.dart';
 import 'package:skinner/services/auth_service.dart';
+import 'package:skinner/services/payment_service.dart';
 class AppointmentScreen extends StatefulWidget {
   final Map doctor;
   final VoidCallback onBack;
@@ -666,14 +668,114 @@ SizedBox(
   width: double.infinity,
   height: 55,
   child: ElevatedButton(
-    onPressed: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => const PaymentScreen(),
-    ),
-  );
-},
+    onPressed: () async {
+      if (dates.isEmpty || times.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select a date and time slot.")),
+        );
+        return;
+      }
+      
+      final dateStr = dates[selectedDateIndex]["date"]?.toString();
+      final timeStr = times[selectedTimeIndex]["time"]?.toString();
+      if (dateStr == null || timeStr == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Selected slot is invalid.")),
+        );
+        return;
+      }
+
+      // Show loading overlay
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      try {
+        final paymentService = PaymentService();
+        final analysisId = await paymentService.getLatestAnalysisId();
+        if (analysisId == null) {
+          Navigator.pop(context); // dismiss loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("No skin analysis found. Please run an AI analysis first."),
+            ),
+          );
+          return;
+        }
+
+        // Combine date and time (e.g. "2026-02-07" and "09:00" -> "2026-02-07T09:00:00.000Z")
+        final combinedDateIso = "${dateStr}T${timeStr}:00.000Z";
+
+        String? appointmentId;
+
+        try {
+          final bookingResp = await paymentService.bookAppointment(
+            doctorSyndicateId: widget.doctor["medical_syndicate_id_card"]?.toString() ?? '',
+            date: combinedDateIso,
+            analysisId: analysisId,
+          );
+          final data = bookingResp['data'] ?? bookingResp;
+          appointmentId = data['appointment_id']?.toString() ?? 
+                              data['id']?.toString() ?? 
+                              data['appointment']?['id']?.toString();
+        } catch (bookingError) {
+          if (bookingError is DioException && bookingError.response?.statusCode == 409) {
+            debugPrint("Booking conflict (409). Searching for existing pending appointment...");
+            appointmentId = await _findExistingPendingAppointment(
+              doctorSyndicateId: widget.doctor["medical_syndicate_id_card"]?.toString() ?? '',
+              dateIso: combinedDateIso,
+            );
+          }
+          if (appointmentId == null) {
+            rethrow;
+          }
+        }
+
+        Navigator.pop(context); // dismiss loading
+
+        if (appointmentId == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Failed to book appointment. Invalid response from server.")),
+          );
+          return;
+        }
+
+        final double fee = double.tryParse(widget.doctor["consultation_fee"]?.toString() ?? '') ?? 150.0;
+        final docName = widget.doctor["name"]?.toString() ?? "Doctor";
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymentScreen(
+              appointmentId: appointmentId!,
+              doctorName: docName,
+              consultationFee: fee,
+              appointmentDate: "${dateStr} at ${timeStr}",
+            ),
+          ),
+        );
+      } catch (e) {
+        Navigator.pop(context); // dismiss loading
+        String errorMsg = "Failed to book appointment";
+        if (e is DioException) {
+          final serverMessage = e.response?.data?['message'] ?? e.response?.data?['error'];
+          if (serverMessage != null) {
+            errorMsg = "$serverMessage";
+          } else {
+            errorMsg = "$errorMsg: ${e.message}";
+          }
+        } else {
+          errorMsg = "$errorMsg: $e";
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMsg)),
+        );
+      }
+    },
     style: ElevatedButton.styleFrom(
       backgroundColor:
           const Color(0xFF020617),
@@ -698,5 +800,33 @@ SizedBox(
 );
 }
 
+  Future<String?> _findExistingPendingAppointment({
+    required String doctorSyndicateId,
+    required String dateIso,
+  }) async {
+    try {
+      final appointments = await PaymentService().getMyAppointments();
+      for (var appt in appointments) {
+        final docId = appt['medical_syndicate_id_card']?.toString() ?? appt['doctor_id']?.toString();
+        final apptDate = appt['date']?.toString();
+        final status = appt['status']?.toString();
+        
+        if (apptDate != null) {
+          try {
+            final apptDateTime = DateTime.parse(apptDate);
+            final searchDateTime = DateTime.parse(dateIso);
+            if (docId == doctorSyndicateId && 
+                apptDateTime.isAtSameMomentAs(searchDateTime) && 
+                status == 'pending_payment') {
+              return appt['appointment_id']?.toString() ?? appt['id']?.toString();
+            }
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      debugPrint("Failed to find existing pending appointment: $e");
+    }
+    return null;
+  }
 }
 

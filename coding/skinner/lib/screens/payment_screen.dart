@@ -2,7 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:skinner/screens/otp_verification_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
-  const PaymentScreen({super.key});
+  final String appointmentId;
+  final String doctorName;
+  final double consultationFee;
+  final String appointmentDate;
+
+  const PaymentScreen({
+    super.key,
+    required this.appointmentId,
+    required this.doctorName,
+    required this.consultationFee,
+    required this.appointmentDate,
+  });
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -342,21 +353,37 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       height: 55,
                       child: ElevatedButton.icon(
                         onPressed: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) =>
-          const OtpVerificationScreen(),
-    ),
-  );
-},
+                          final cardNum = cardNumberController.text.replaceAll(' ', '').trim();
+                          final cardHolder = cardHolderController.text.trim();
+                          if (cardNum.isEmpty || cardHolder.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Please fill in card details.")),
+                            );
+                            return;
+                          }
+                          final cardLast4 = cardNum.length >= 4 ? cardNum.substring(cardNum.length - 4) : cardNum;
+                          
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => OtpVerificationScreen(
+                                appointmentId: widget.appointmentId,
+                                doctorName: widget.doctorName,
+                                consultationFee: widget.consultationFee,
+                                cardHolderName: cardHolder,
+                                cardLast4: cardLast4,
+                                appointmentDate: widget.appointmentDate,
+                              ),
+                            ),
+                          );
+                        },
                         icon: const Icon(
                           Icons.lock,
                           color: Colors.white,
                         ),
-                        label: const Text(
-                          "Confirm Payment - \$150",
-                          style: TextStyle(
+                        label: Text(
+                          "Confirm Payment - EGP ${widget.consultationFee}",
+                          style: const TextStyle(
                             color: Colors.white,
                           ),
                         ),
