@@ -17,13 +17,14 @@ class AnalysisScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor = theme.cardColor;
+    final borderColor = theme.dividerColor;
     final width = MediaQuery.of(context).size.width;
     
-    // If no analysis result, show error state
     if (analysisResult == null) {
-      return const Center(
-        child: Text('No analysis result available'),
-      );
+      return const Center(child: Text('No analysis result available'));
     }
     
     final disease = analysisResult!.predictedClass;
@@ -32,21 +33,16 @@ class AnalysisScreen extends StatelessWidget {
     final description = analysisResult!.description;
     final recommendations = analysisResult!.recommendations;
     final alternatives = analysisResult!.alternatives;
-    
-    // Format timestamp
-    final formattedDate = DateFormat('M/d/yyyy \'at\' h:mm:ss a')
-        .format(analysisResult!.analyzedAt);
+    final formattedDate = DateFormat('M/d/yyyy \'at\' h:mm:ss a').format(analysisResult!.analyzedAt);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: const Color(0xFFE5E7EB),
-          ),
+          border: Border.all(color: borderColor),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,7 +70,7 @@ class AnalysisScreen extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8F1FF),
+                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE8F1FF),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -169,31 +165,16 @@ class AnalysisScreen extends StatelessWidget {
                             if (loadingProgress == null) return child;
                             return Container(
                               height: width * 0.6,
-                              color: Colors.grey.shade200,
-                              child: const Center(
-                                child: CircularProgressIndicator(),
-                              ),
+                              color: theme.dividerColor,
+                              child: const Center(child: CircularProgressIndicator()),
                             );
                           },
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                                height: width * 0.6,
-                                color: Colors.grey.shade200,
-                                child: const Center(
-                                  child: Icon(Icons.broken_image_outlined,
-                                      size: 60, color: Colors.grey),
-                                ),
-                              ),
+                              errorBuilder: (context, error, stackTrace) =>
+                              Container(height: width * 0.6, color: theme.dividerColor,
+                                child: const Center(child: Icon(Icons.broken_image_outlined, size: 60, color: Colors.grey))),
                         )
-                      // No image at all
-                      : Container(
-                          height: width * 0.6,
-                          color: Colors.grey.shade200,
-                          child: const Center(
-                            child: Icon(Icons.image_outlined,
-                                size: 60, color: Colors.grey),
-                          ),
-                        ),
+                      : Container(height: width * 0.6, color: theme.dividerColor,
+                          child: const Center(child: Icon(Icons.image_outlined, size: 60, color: Colors.grey))),
             ),
 
             const SizedBox(height: 24),
@@ -212,22 +193,14 @@ class AnalysisScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFF),
+                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFF),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFFE5E7EB),
-                ),
+                border: Border.all(color: borderColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   Text(
-                          disease,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text(disease, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
                   const SizedBox(height: 16),
 
@@ -311,7 +284,7 @@ class AnalysisScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFF),
+                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFF),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -339,9 +312,7 @@ class AnalysisScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border.all(
-                  color: const Color(0xFFE5E7EB),
-                ),
+                border: Border.all(color: borderColor),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: alternatives.isEmpty

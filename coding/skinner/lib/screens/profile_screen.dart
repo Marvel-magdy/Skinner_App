@@ -3,6 +3,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart' show adminToken;
+import 'package:skinner/l10n/app_translations.dart';
 
 class PatientScreen extends StatefulWidget {
   const PatientScreen({super.key});
@@ -139,261 +140,145 @@ class _PatientScreenState extends State<PatientScreen> {
   }
 
   void _showEditProfileDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    barrierColor: Colors.black.withOpacity(0.4),
-    builder: (context) {
-      return Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.85,
-          padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-
-                /// Header
-                Row(
-                  children: [
-
-                    const Icon(
-                      Icons.edit_outlined,
-                      size: 20,
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    const Expanded(
-                      child: Text(
-                        "Patient Information",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (context) {
+        return Dialog(
+          backgroundColor: theme.cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.85,
+            padding: const EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.edit_outlined, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          AppL10n.of(context, AppStrings.patientInfo),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                         ),
                       ),
-                    ),
-
-                    IconButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(
-                        Icons.close,
-                        color: Color(0xFF2C67FF),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close, color: Color(0xFF2C67FF)),
                       ),
-                    ),
-                  ],
-                ),
-
-                const Divider(),
-
-                const SizedBox(height: 15),
-
-                /// Full Name
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Full Name",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
+                    ],
+                  ),
+                  const Divider(),
+                  const SizedBox(height: 15),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(AppL10n.of(context, AppStrings.fullName), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF334155) : const Color(0xFFF5F5F5),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 6),
-
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFFF5F5F5),
-                    border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(AppL10n.of(context, AppStrings.email), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: emailController,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 14),
-
-                /// Email
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Email",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(AppL10n.of(context, AppStrings.phoneNumber), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: phoneController,
+                    decoration: InputDecoration(
+                      hintText: "+1 (555) 000-0000",
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF334155) : const Color(0xFFF5F5F5),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 6),
-
-                TextField(
-                  controller: emailController,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFFE5E7EB),
-                    border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(AppL10n.of(context, AppStrings.address), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: addressController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF334155) : const Color(0xFFF5F5F5),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 14),
-
-                /// Phone
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Phone Number",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                TextField(
-                  controller: phoneController,
-                  decoration: InputDecoration(
-                    hintText: "+1 (555) 000-0000",
-                    filled: true,
-                    fillColor: const Color(0xFFF5F5F5),
-                    border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                /// Address
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Address",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                TextField(
-                  controller: addressController,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFFF5F5F5),
-                    border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                /// Buttons
-                Row(
-                  children: [
-
-                    Expanded(
-                      child: SizedBox(
-                        height: 45,
-                        child: ElevatedButton(
-                          style:
-                              ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color(
-                              0xFF2C67FF,
+                  const SizedBox(height: 25),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 45,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2C67FF),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
-                            shape:
-                                RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(
-                                12,
-                              ),
-                            ),
-                          ),
-                          onPressed: () {
-                            _saveProfileChanges();
-                          },
-                          child: const Text(
-                            "Save Changes",
-                            style: TextStyle(
-                              color: Colors.white,
-                            ),
+                            onPressed: _saveProfileChanges,
+                            child: Text(AppL10n.of(context, AppStrings.saveChanges), style: const TextStyle(color: Colors.white)),
                           ),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    Expanded(
-                      child: SizedBox(
-                        height: 45,
-                        child: OutlinedButton(
-                          style:
-                              OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                              color:
-                                  Color(0xFF2C67FF),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 45,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF2C67FF)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
-                            shape:
-                                RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(
-                                12,
-                              ),
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.pop(
-                              context,
-                            );
-                          },
-                          child: const Text(
-                            "Cancel",
-                            style: TextStyle(
-                              color:
-                                  Color(0xFF2C67FF),
-                            ),
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(AppL10n.of(context, AppStrings.cancel), style: const TextStyle(color: Color(0xFF2C67FF))),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor = theme.cardColor;
+    final borderColor = theme.dividerColor;
+
     if (isLoading) {
       return const Center(
         child: Padding(
@@ -412,11 +297,9 @@ class _PatientScreenState extends State<PatientScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardColor,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-              ),
+              border: Border.all(color: borderColor),
             ),
             child: Column(
               children: [
@@ -426,9 +309,9 @@ class _PatientScreenState extends State<PatientScreen> {
                       MainAxisAlignment.spaceBetween,
                   children: [
 
-                    const Text(
-                      "Patient Information",
-                      style: TextStyle(
+                    Text(
+                      AppL10n.of(context, AppStrings.patientInfo),
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -442,7 +325,7 @@ class _PatientScreenState extends State<PatientScreen> {
     Icons.edit,
     size: 18,
   ),
-  label: const Text("Edit"),
+  label: Text(AppL10n.of(context, AppStrings.edit)),
 ),
                   ],
                 ),
@@ -553,59 +436,56 @@ class _PatientScreenState extends State<PatientScreen> {
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardColor,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-              ),
+              border: Border.all(color: borderColor),
             ),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                const Text(
+                Text(
                   "Appointment Schedule",
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 TableCalendar(
                   firstDay: DateTime.utc(2020, 1, 1),
                   lastDay: DateTime.utc(2035, 12, 31),
                   focusedDay: _focusedDay,
-
-                  selectedDayPredicate: (day) {
-                    return isSameDay(
-                      _selectedDay,
-                      day,
-                    );
-                  },
-
-                  onDaySelected:
-                      (selectedDay, focusedDay) {
+                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                  onDaySelected: (selectedDay, focusedDay) {
                     setState(() {
                       _selectedDay = selectedDay;
                       _focusedDay = focusedDay;
                     });
                   },
-
-                  headerStyle: const HeaderStyle(
+                  headerStyle: HeaderStyle(
                     formatButtonVisible: false,
                     titleCentered: true,
+                    titleTextStyle: TextStyle(
+                      color: theme.textTheme.bodyLarge?.color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    leftChevronIcon: Icon(Icons.chevron_left, color: theme.iconTheme.color),
+                    rightChevronIcon: Icon(Icons.chevron_right, color: theme.iconTheme.color),
                   ),
-
+                  daysOfWeekStyle: DaysOfWeekStyle(
+                    weekdayStyle: TextStyle(color: isDark ? Colors.white60 : Colors.black54),
+                    weekendStyle: TextStyle(color: isDark ? Colors.white60 : Colors.black54),
+                  ),
                   calendarStyle: CalendarStyle(
+                    defaultTextStyle: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                    weekendTextStyle: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                    outsideTextStyle: TextStyle(color: isDark ? Colors.white24 : Colors.black26),
                     todayDecoration: BoxDecoration(
                       color: Colors.grey.shade400,
                       shape: BoxShape.circle,
                     ),
-                    selectedDecoration:
-                        const BoxDecoration(
+                    selectedDecoration: const BoxDecoration(
                       color: Color(0xFF2C67FF),
                       shape: BoxShape.circle,
                     ),
@@ -622,11 +502,9 @@ class _PatientScreenState extends State<PatientScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardColor,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-              ),
+              border: Border.all(color: borderColor),
             ),
             child: Column(
               crossAxisAlignment:
@@ -698,29 +576,24 @@ class _PatientScreenState extends State<PatientScreen> {
     required String time,
     required String doctor,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
-
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFE8F1FF),
-              borderRadius:
-                  BorderRadius.circular(12),
+              color: isDark ? const Color(0xFF1E3A5F) : const Color(0xFFE8F1FF),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.calendar_month,
-              color: Color(0xFF2C67FF),
-            ),
+            child: const Icon(Icons.calendar_month, color: Color(0xFF2C67FF)),
           ),
 
           const SizedBox(width: 14),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:skinner/l10n/app_translations.dart';
 
 import 'package:skinner/authuntication/create_account.dart';
 import 'package:skinner/authuntication/forgot_password.dart';
@@ -83,7 +84,10 @@ class _SignInState extends State<SignIn> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor = theme.cardColor;
+    final fieldFill = isDark ? const Color(0xFF334155) : const Color(0xFFF5F5F5);
 
     return Scaffold(
       body: SafeArea(
@@ -92,41 +96,25 @@ class _SignInState extends State<SignIn> {
             children: [
               /// Logo
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 40,
-                ),
-
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
                 child: Row(
                   children: [
                     ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.asset('assets/Untitled-1-01 1.png', width: 80, height: 80, fit: BoxFit.cover)),
-
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset('assets/Untitled-1-01 1.png',
+                          width: 80, height: 80, fit: BoxFit.cover),
+                    ),
                     const SizedBox(width: 14),
-
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-
-                      children: const [
-                        Text(
-                          'Skinner',
-
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2C67FF),
-                          ),
-                        ),
-
-                        Text(
-                          'Skin disease detection system',
-
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF2C67FF),
-                          ),
-                        ),
+                      children: [
+                        Text(AppL10n.of(context, AppStrings.appName),
+                            style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2C67FF))),
+                        Text(AppL10n.of(context, AppStrings.skinDetectionSys),
+                            style: const TextStyle(fontSize: 14, color: Color(0xFF2C67FF))),
                       ],
                     ),
                   ],
@@ -136,280 +124,181 @@ class _SignInState extends State<SignIn> {
               /// Card
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
-
                 child: Container(
                   padding: const EdgeInsets.all(24),
-
                   decoration: BoxDecoration(
-                    color: Colors.white,
-
+                    color: cardColor,
                     borderRadius: BorderRadius.circular(20),
-
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-
+                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
                         blurRadius: 20,
-
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-
                     children: [
                       /// Title
-                      const Text(
-                        'Sign In',
-
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
+                      Text(AppL10n.of(context, AppStrings.signIn),
+                          style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: theme.textTheme.bodyLarge?.color)),
                       const SizedBox(height: 6),
-
-                      const Text(
-                        'Enter your credentials to access your account',
-
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-
+                      Text(AppL10n.of(context, AppStrings.signInSubtitle),
+                          style: const TextStyle(fontSize: 14, color: Colors.grey)),
                       const SizedBox(height: 24),
 
                       /// Role Dropdown
-                      const Text(
-                        'I am a',
-                        style: TextStyle(fontWeight: FontWeight.w500),
-                      ),
-
+                      Text(AppL10n.of(context, AppStrings.iAmA),
+                          style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: theme.textTheme.bodyLarge?.color)),
                       const SizedBox(height: 8),
-
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
-
+                          color: fieldFill,
                           borderRadius: BorderRadius.circular(10),
                         ),
-
                         child: DropdownButton<String>(
                           value: _selectedRole,
-
                           isExpanded: true,
-
                           underline: const SizedBox(),
-
+                          dropdownColor: cardColor,
+                          style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14),
                           items: _roles.map((role) {
-                            return DropdownMenuItem(
-                              value: role,
-
-                              child: Text(role),
-                            );
+                            String label;
+                            switch (role) {
+                              case 'Doctor': label = AppL10n.of(context, AppStrings.doctor); break;
+                              case 'Administrator': label = AppL10n.of(context, AppStrings.administrator); break;
+                              default: label = AppL10n.of(context, AppStrings.patient);
+                            }
+                            return DropdownMenuItem(value: role, child: Text(label));
                           }).toList(),
-
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedRole = value!;
-                            });
-                          },
+                          onChanged: (value) => setState(() => _selectedRole = value!),
                         ),
                       ),
-
                       const SizedBox(height: 16),
 
                       /// Email
-                      const Text('Email'),
-
+                      Text(AppL10n.of(context, AppStrings.email),
+                          style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
                       const SizedBox(height: 8),
-
                       TextField(
                         controller: emailController,
-
+                        style: TextStyle(color: theme.textTheme.bodyLarge?.color),
                         decoration: InputDecoration(
                           hintText: 'name@example.com',
-
                           filled: true,
-
-                          fillColor: const Color(0xFFF5F5F5),
-
+                          fillColor: fieldFill,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
 
-                            borderSide: BorderSide.none,
+                      /// Password
+                      Text(AppL10n.of(context, AppStrings.password),
+                          style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: passwordController,
+                        obscureText: _obscurePassword,
+                        style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: fieldFill,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none),
+                          suffixIcon: IconButton(
+                            icon: Icon(_obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined),
+                            onPressed: () =>
+                                setState(() => _obscurePassword = !_obscurePassword),
                           ),
                         ),
                       ),
 
                       const SizedBox(height: 16),
-
-                      /// Password
-                      const Text('Password'),
-
-                      const SizedBox(height: 8),
-
-                      TextField(
-                        controller: passwordController,
-
-                        obscureText: _obscurePassword,
-
-                        decoration: InputDecoration(
-                          filled: true,
-
-                          fillColor: const Color(0xFFF5F5F5),
-
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-
-                            borderSide: BorderSide.none,
-                          ),
-
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                            ),
-
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
+                            backgroundColor:
+                                isDark ? const Color(0xFF2C67FF) : Colors.black,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                           onPressed: () async {
-                            setState(() {
-                              isLoading = true;
-                            });
-
+                            setState(() => isLoading = true);
                             try {
                               final response = await authService.login(
                                 email: emailController.text.trim(),
                                 password: passwordController.text.trim(),
                                 role: getApiRole(),
                               );
-
                               final token = response.data["token"];
                               if (token != null) {
                                 final prefs = await SharedPreferences.getInstance();
                                 await prefs.setString('token', token);
                               }
-
-                              print(response.data);
-
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Login Success'),
-                                ),
-                              );
-
+                                  SnackBar(content: Text(AppL10n.of(context, AppStrings.loginSuccess))));
                               _navigateBasedOnRole();
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Login Failed: $e'),
-                                ),
-                              );
+                                  SnackBar(content: Text('${AppL10n.of(context, AppStrings.loginFailed)}: $e')));
                             } finally {
-                              setState(() {
-                                isLoading = false;
-                              });
+                              setState(() => isLoading = false);
                             }
                           },
                           child: isLoading
-                              ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
-                              : const Text(
-                            'Sign In',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : Text(AppL10n.of(context, AppStrings.signIn),
+                                  style: const TextStyle(fontSize: 16, color: Colors.white)),
                         ),
                       ),
 
-
-
                       const SizedBox(height: 16),
-
-                      /// Register
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-
                         children: [
-                          const Text("Don't have an account? "),
-
+                        Text(AppL10n.of(context, AppStrings.noAccount),
+                              style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
                           GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-
-                                MaterialPageRoute(builder: (_) => Register()),
-                              );
-                            },
-
-                            child: const Text(
-                              'Register here',
-
-                              style: TextStyle(
-                                color: Color(0xFF2C67FF),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            onTap: () => Navigator.push(
+                                context, MaterialPageRoute(builder: (_) => Register())),
+                            child: Text(AppL10n.of(context, AppStrings.registerHere),
+                                style: const TextStyle(
+                                    color: Color(0xFF2C67FF),
+                                    fontWeight: FontWeight.w600)),
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 10),
-
-                      /// Forgot Password
                       Center(
                         child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-
-                              MaterialPageRoute(
-                                builder: (_) => ForgotPassword(),
-                              ),
-                            );
-                          },
-
-                          child: const Text(
-                            'Forgot password?',
-
-                            style: TextStyle(color: Color(0xFF2C67FF)),
-                          ),
+                          onTap: () => Navigator.push(context,
+                              MaterialPageRoute(builder: (_) => ForgotPassword())),
+                          child: Text(AppL10n.of(context, AppStrings.forgotPassword),
+                              style: const TextStyle(color: Color(0xFF2C67FF))),
                         ),
-                        // GestureDetector
-                      ), // Center
+                      ),
                     ],
-                  ), // Column
-                ), // Container
-              ), // Padding
+                  ),
+                ),
+              ),
             ],
-          ), // Column
-        ), // SingleChildScrollView
-      ), // SafeArea
+          ),
+        ),
+      ),
     );
   }
 }

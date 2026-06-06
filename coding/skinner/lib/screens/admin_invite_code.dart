@@ -174,17 +174,16 @@ if (!showGreenBanner) {
 
   @override
   Widget build(BuildContext context) {
-  return SingleChildScrollView(   
-    //   body: SingleChildScrollView(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: const Color(0xFFEFF1F9),
-            ),
+            border: Border.all(color: theme.dividerColor),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,7 +308,7 @@ if (!showGreenBanner) {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAF9FF),
+                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFAF9FF),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: const Color(0xFFEEF2F6),
@@ -357,7 +356,7 @@ if (!showGreenBanner) {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isDark ? const Color(0xFF334155) : Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: const Color(0xFFEEF2F6),
@@ -378,7 +377,7 @@ if (!showGreenBanner) {
                             ),
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFF1F5F9),
+                                backgroundColor: isDark ? const Color(0xFF475569) : const Color(0xFFF1F5F9),
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),

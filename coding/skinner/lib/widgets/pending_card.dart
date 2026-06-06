@@ -55,31 +55,27 @@ class PendingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final String patientName = caseData['patient_name'] ?? 'Unknown';
     final String age         = (caseData['age'] ?? caseData['patient_age'] ?? '--').toString();
     final String gender      = (caseData['gender'] ?? caseData['patient_gender'] ?? '--').toString();
-    final String diagnosis   = caseData['skin_disease_classification'] ??
-                               caseData['ai_diagnosis'] ??
-                               caseData['diagnosis'] ??
-                               'Unknown';
-    final String imageUrl    = caseData['skin_image_upload'] ??
-                               caseData['image_url'] ?? '';
+    final String diagnosis   = caseData['skin_disease_classification'] ?? caseData['ai_diagnosis'] ?? caseData['diagnosis'] ?? 'Unknown';
+    final String imageUrl    = caseData['skin_image_upload'] ?? caseData['image_url'] ?? '';
     final String severity    = _severityLabel(caseData);
     final String confidence  = _confidenceLabel(caseData);
     final String date        = _dateLabel(caseData);
-
-    // Chat fields
-    final String chatId  = (caseData['chat_id'] ?? '').toString();
-    final String doctorN = (caseData['doctor_name'] ?? 'Patient Chat').toString();
+    final String chatId      = (caseData['chat_id'] ?? '').toString();
+    final String doctorN     = (caseData['doctor_name'] ?? 'Patient Chat').toString();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
+        border: Border.all(color: theme.dividerColor),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.07), blurRadius: 6, offset: const Offset(0, 2)),
         ],
       ),
       child: Column(
@@ -115,8 +111,9 @@ class PendingCard extends StatelessWidget {
                           fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(width: 8),
-                    _pill('$age yrs, $gender', Colors.grey.shade100,
-                        Colors.black87),
+                    _pill('$age yrs, $gender',
+                        isDark ? const Color(0xFF334155) : Colors.grey.shade100,
+                        isDark ? Colors.white70 : Colors.black87),
                     const Spacer(),
                     _pill('pending', const Color(0xFFFFEDD5),
                         const Color(0xFFB45309)),
@@ -140,7 +137,9 @@ class PendingCard extends StatelessWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     _pill(severity, _severityBg(severity), _severityColor(severity)),
-                    _pill(confidence, Colors.grey.shade100, Colors.black87),
+                    _pill(confidence,
+                        isDark ? const Color(0xFF334155) : Colors.grey.shade100,
+                        isDark ? Colors.white70 : Colors.black87),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -170,7 +169,7 @@ class PendingCard extends StatelessWidget {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0F172A),
+                      backgroundColor: isDark ? const Color(0xFF2C67FF) : const Color(0xFF0F172A),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(

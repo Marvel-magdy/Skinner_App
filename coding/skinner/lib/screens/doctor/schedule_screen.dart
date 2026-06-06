@@ -241,7 +241,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
@@ -348,13 +348,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 _loadSlotsForDay(selected);
               });
             },
-            headerStyle: const HeaderStyle(
+            headerStyle: HeaderStyle(
               formatButtonVisible: false,
               titleCentered: false,
               titleTextStyle: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+              leftChevronIcon: Icon(Icons.chevron_left, color: Theme.of(context).iconTheme.color),
+              rightChevronIcon: Icon(Icons.chevron_right, color: Theme.of(context).iconTheme.color),
+            ),
+            daysOfWeekStyle: DaysOfWeekStyle(
+              weekdayStyle: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white60 : Colors.black54),
+              weekendStyle: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white60 : Colors.black54),
             ),
             calendarStyle: CalendarStyle(
+              defaultTextStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              weekendTextStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              outsideTextStyle: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white24 : Colors.black26),
               selectedDecoration: BoxDecoration(
                 color: const Color(0xFF2563EB),
                 borderRadius: BorderRadius.circular(10),
@@ -363,13 +375,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 color: const Color(0xFFEBF1FF),
                 borderRadius: BorderRadius.circular(10),
               ),
-              todayTextStyle: const TextStyle(
-                  color: Color(0xFF2563EB), fontWeight: FontWeight.bold),
-              // Highlight days that already have availability
-              markerDecoration: const BoxDecoration(
-                color: Color(0xFF93C5FD),
-                shape: BoxShape.circle,
-              ),
+              todayTextStyle: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold),
+              markerDecoration: const BoxDecoration(color: Color(0xFF93C5FD), shape: BoxShape.circle),
             ),
             calendarBuilders: CalendarBuilders(
               markerBuilder: (ctx, day, events) {
@@ -552,20 +559,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     required List<String> items,
     required void Function(String?) onChanged,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fillColor = isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFB);
+    final borderColor = isDark ? const Color(0xFF475569) : const Color(0xFFE5E7EB);
+    final textColor = isDark ? const Color(0xFFE2E8F0) : const Color(0xFF0F172A);
     return Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFB),
+        color: fillColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: borderColor),
       ),
       child: DropdownButton<String>(
         value: items.contains(value) ? value : items.first,
         isExpanded: true,
         underline: const SizedBox(),
-        icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF6B7280)),
-        style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+        dropdownColor: fillColor,
+        icon: Icon(Icons.keyboard_arrow_down, size: 16, color: textColor.withOpacity(0.5)),
+        style: TextStyle(fontSize: 13, color: textColor),
         items: items.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
         onChanged: onChanged,
       ),
@@ -577,23 +589,26 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     required List<int> items,
     required void Function(int?) onChanged,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fillColor = isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFB);
+    final borderColor = isDark ? const Color(0xFF475569) : const Color(0xFFE5E7EB);
+    final textColor = isDark ? const Color(0xFFE2E8F0) : const Color(0xFF0F172A);
     return Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFB),
+        color: fillColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: borderColor),
       ),
       child: DropdownButton<int>(
         value: items.contains(value) ? value : items.first,
         isExpanded: true,
         underline: const SizedBox(),
-        icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF6B7280)),
-        style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-        items: items
-            .map((d) => DropdownMenuItem(value: d, child: Text('$d min')))
-            .toList(),
+        dropdownColor: fillColor,
+        icon: Icon(Icons.keyboard_arrow_down, size: 16, color: textColor.withOpacity(0.5)),
+        style: TextStyle(fontSize: 13, color: textColor),
+        items: items.map((d) => DropdownMenuItem(value: d, child: Text('$d min'))).toList(),
         onChanged: onChanged,
       ),
     );
@@ -685,6 +700,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
+        backgroundColor: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -755,13 +771,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   Widget _dialogField(String label, TextEditingController ctrl,
       {bool readOnly = false, String? hint, String? suffixText}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final readFill = isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9);
+    final editFill = isDark ? const Color(0xFF334155) : const Color(0xFFF8F9FA);
+    final border = isDark ? const Color(0xFF475569) : const Color(0xFFE5E7EB);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF374151))),
+          Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF374151))),
           const SizedBox(height: 5),
           TextField(
             controller: ctrl,
@@ -772,19 +791,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               suffixText: suffixText,
               suffixStyle: const TextStyle(color: Color(0xFF9CA3AF)),
               filled: true,
-              fillColor: readOnly
-                  ? const Color(0xFFF1F5F9)
-                  : const Color(0xFFF8F9FA),
+              fillColor: readOnly ? readFill : editFill,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                borderSide: BorderSide(color: border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                borderSide: BorderSide(color: border),
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
             ),
           ),
         ],
@@ -794,16 +810,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   // ── shared helpers ───────────────────────────────────────────────────────────
 
-  Widget _card({required Widget child}) => Container(
-        margin: const EdgeInsets.only(bottom: 4),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: child,
-      );
+  Widget _card({required Widget child}) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: child,
+    );
+  }
 
   Widget _legendDot(Color color) => Container(
         width: 12, height: 12,

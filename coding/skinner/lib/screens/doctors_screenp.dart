@@ -54,35 +54,29 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      color: const Color(0xFFF9FAFB),
+      color: theme.scaffoldBackgroundColor,
       child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
-              const Text(
+              Text(
                 "Recommended Specialists",
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 'Based on your diagnosis, we recommend these verified dermatology specialists',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[600],
-                  height: 1.4,
-                ),
+                style: TextStyle(fontSize: 13, color: Colors.grey[600], height: 1.4),
               ),
               const SizedBox(height: 20),
-
-              // Content
               _buildContent(),
             ],
           ),
@@ -116,44 +110,44 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
       );
 
   Widget _buildSkeletonCard() {
-    const base = Color(0xFFEEEEEE);
+    final base = Colors.grey.shade300;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const CircleAvatar(radius: 28, backgroundColor: base),
+              const CircleAvatar(radius: 28, backgroundColor: Color(0xFFBBBBBB)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(width: 120, height: 14, color: base),
+                    Container(width: 120, height: 14, color: const Color(0xFFBBBBBB)),
                     const SizedBox(height: 8),
-                    Container(width: 80, height: 12, color: base),
+                    Container(width: 80, height: 12, color: const Color(0xFFBBBBBB)),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          Container(width: double.infinity, height: 11, color: base),
+          Container(width: double.infinity, height: 11, color: const Color(0xFFBBBBBB)),
           const SizedBox(height: 6),
-          Container(width: 160, height: 11, color: base),
+          Container(width: 160, height: 11, color: const Color(0xFFBBBBBB)),
           const SizedBox(height: 20),
           Container(
             width: double.infinity,
             height: 44,
             decoration: BoxDecoration(
-              color: base,
+              color: const Color(0xFFBBBBBB),
               borderRadius: BorderRadius.circular(10),
             ),
           ),
@@ -263,21 +257,25 @@ class _DoctorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textPrimary = theme.textTheme.bodyLarge?.color ?? const Color(0xFF0F172A);
+    final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: theme.dividerColor),
       ),
       padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Row 1: Avatar  |  Name + Verified + Specialty ──
+          // ── Row 1: Avatar | Name + Verified + Specialty ──
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Circular avatar (light blue, matching design)
               CircleAvatar(
                 radius: 28,
                 backgroundColor: const Color(0xFFDDEAFE),
@@ -291,151 +289,99 @@ class _DoctorCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-
-              // Name block
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Name + Verified badge on same row
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
                             _name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
+                              color: textPrimary,
                             ),
                           ),
                         ),
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: const Color(0xFFDCFCE7),
                             borderRadius: BorderRadius.circular(100),
-                            border: Border.all(
-                                color: const Color(0xFF86EFAC), width: 1),
+                            border: Border.all(color: const Color(0xFF86EFAC), width: 1),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.verified,
-                                  color: Color(0xFF16A34A), size: 11),
+                              Icon(Icons.verified, color: Color(0xFF16A34A), size: 11),
                               SizedBox(width: 3),
-                              Text(
-                                "Verified",
-                                style: TextStyle(
-                                  color: Color(0xFF15803D),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              Text("Verified",
+                                  style: TextStyle(
+                                    color: Color(0xFF15803D),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  )),
                             ],
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 3),
-
-                    // Specialty in grey
-                    Text(
-                      _specialization,
-                      style: const TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 13,
-                      ),
-                    ),
+                    Text(_specialization, style: TextStyle(color: textSecondary, fontSize: 13)),
                   ],
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 14),
-
-          // ── Row 2: Rating ──────────────────────────────────
-          Row(
-            children: const [
-              Icon(Icons.star_rounded, color: Colors.amber, size: 16),
-              SizedBox(width: 4),
-              Text(
-                "4.9",
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A)),
-              ),
-              SizedBox(width: 4),
-              Text(
-                "(324 reviews)",
-                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          // ── Row 3: Experience ──────────────────────────────
           Row(
             children: [
-              const Icon(Icons.work_outline_rounded,
-                  size: 15, color: Color(0xFF64748B)),
-              const SizedBox(width: 6),
-              Text(
-                "$_experience years experience",
-                style: const TextStyle(
-                    fontSize: 13, color: Color(0xFF475569)),
-              ),
+              const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+              const SizedBox(width: 4),
+              Text("4.9",
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textPrimary)),
+              const SizedBox(width: 4),
+              Text("(324 reviews)", style: TextStyle(fontSize: 12, color: textSecondary)),
             ],
           ),
-
           const SizedBox(height: 10),
-
-          // ── Row 4: Location ────────────────────────────────
+          Row(
+            children: [
+              Icon(Icons.work_outline_rounded, size: 15, color: textSecondary),
+              const SizedBox(width: 6),
+              Text("$_experience years experience",
+                  style: TextStyle(fontSize: 13, color: textSecondary)),
+            ],
+          ),
+          const SizedBox(height: 10),
           GestureDetector(
             onTap: () => onViewMap(doctor),
             child: Row(
               children: [
-                const Icon(Icons.location_on_outlined,
-                    size: 15, color: Color(0xFF64748B)),
+                Icon(Icons.location_on_outlined, size: 15, color: textSecondary),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text(
-                    _address,
-                    style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF475569)),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  child: Text(_address,
+                      style: TextStyle(fontSize: 13, color: textSecondary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
                 ),
               ],
             ),
           ),
-
           const SizedBox(height: 10),
-
-          // ── Row 5: Available today ─────────────────────────
-          const Row(
+          Row(
             children: [
-              Icon(Icons.access_time_rounded,
-                  size: 15, color: Color(0xFF64748B)),
-              SizedBox(width: 6),
-              Text(
-                "Available today",
-                style:
-                    TextStyle(fontSize: 13, color: Color(0xFF475569)),
-              ),
+              Icon(Icons.access_time_rounded, size: 15, color: textSecondary),
+              const SizedBox(width: 6),
+              Text("Available today", style: TextStyle(fontSize: 13, color: textSecondary)),
             ],
           ),
-
           const SizedBox(height: 14),
-
-          // ── Row 6: Chips ───────────────────────────────────
           Wrap(
             spacing: 8,
             runSpacing: 6,
@@ -446,55 +392,36 @@ class _DoctorCard extends StatelessWidget {
               _Chip(text: "Spanish"),
             ],
           ),
-
           const SizedBox(height: 18),
-
-          // ── Consultation fee (centered label + price) ──────
           Center(
             child: Column(
               children: [
-                const Text(
-                  "Consultation Fee",
-                  style: TextStyle(
-                      fontSize: 12, color: Color(0xFF64748B)),
-                ),
+                Text("Consultation Fee",
+                    style: TextStyle(fontSize: 12, color: textSecondary)),
                 const SizedBox(height: 2),
-                Text(
-                  "\$$_fee",
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2563EB),
-                  ),
-                ),
+                Text("\$$_fee",
+                    style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2563EB))),
               ],
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // ── Book Appointment button (full-width, dark) ─────
           SizedBox(
             width: double.infinity,
             height: 48,
             child: ElevatedButton.icon(
               onPressed: () => onBookAppointment(doctor),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F172A),
+                backgroundColor: isDark ? const Color(0xFF2C67FF) : const Color(0xFF0F172A),
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               icon: const Icon(Icons.calendar_today_rounded, size: 16),
-              label: const Text(
-                "Book Appointment",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              label: const Text("Book Appointment",
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -510,15 +437,19 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
+        style: TextStyle(
+          fontSize: 11,
+          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+        ),
       ),
     );
   }

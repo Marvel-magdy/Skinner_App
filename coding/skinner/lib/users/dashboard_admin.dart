@@ -30,42 +30,25 @@ class _DashboardAdminState extends State<dashboard_admin> {
   Map<String, dynamic> statsData = {};
   bool isStatsLoading = true;
 
-  Widget _buildTab(
-    String title,
-    int index,
-  ) {
+  Widget _buildTab(String title, int index) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     bool selected = selectedTab == index;
-
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedTab = index;
-        });
-      },
+      onTap: () => setState(() => selectedTab = index),
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 10,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
+          color: selected ? (isDark ? const Color(0xFF1E293B) : Colors.white) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [],
+          boxShadow: selected ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))] : [],
         ),
         child: Text(
           title,
           style: TextStyle(
             fontSize: 14,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? Colors.black87 : Colors.grey,
+            color: selected ? (isDark ? Colors.white : Colors.black87) : Colors.grey,
           ),
         ),
       ),
@@ -427,7 +410,7 @@ class _DashboardAdminState extends State<dashboard_admin> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -439,13 +422,10 @@ class _DashboardAdminState extends State<dashboard_admin> {
     vertical: 16,
   ),
 
-  decoration: const BoxDecoration(
-    color: Color(0xFFFCFAFF),
-
+  decoration: BoxDecoration(
+    color: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).cardColor,
     border: Border(
-      bottom: BorderSide(
-        color: Color(0xFFE7D8FF),
-      ),
+      bottom: BorderSide(color: Theme.of(context).dividerColor),
     ),
   ),
 
@@ -569,89 +549,66 @@ class _DashboardAdminState extends State<dashboard_admin> {
                           padding: const EdgeInsets.all(16),
                           children: [
                             /// Search
-                            Container(
+                            Builder(builder: (context) {
+                              final theme = Theme.of(context);
+                              final isDark = theme.brightness == Brightness.dark;
+                              return Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: theme.cardColor,
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: const Color(0xFFD8D4F2),
-                                ),
+                                border: Border.all(color: theme.dividerColor),
                               ),
                               child: Column(
                                 children: [
-                                  // Search
                                   Container(
                                     height: 56,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF8F8FC),
+                                      color: isDark ? const Color(0xFF334155) : const Color(0xFFF8F8FC),
                                       borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                        color: const Color(0xFFD8D4F2),
-                                      ),
+                                      border: Border.all(color: theme.dividerColor),
                                     ),
                                     child: TextField(
-                                      onChanged: (value) {
-                                        setState(() {
-                                          searchText = value.toLowerCase();
-                                          print(value);
-                                        });
-                                      },
+                                      onChanged: (value) => setState(() => searchText = value.toLowerCase()),
                                       decoration: const InputDecoration(
                                         hintText: "Search by name, email, or phone...",
-                                        prefixIcon: Icon(
-                                          Icons.search,
-                                          color: Color(0xFF7E7E94),
-                                        ),
+                                        prefixIcon: Icon(Icons.search, color: Color(0xFF7E7E94)),
                                         border: InputBorder.none,
                                       ),
                                     ),
                                   ),
-
                                   const SizedBox(height: 16),
-
-                                  // Filters
                                   Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFEFF1F7),
+                                      color: isDark ? const Color(0xFF334155) : const Color(0xFFEFF1F7),
                                       borderRadius: BorderRadius.circular(14),
                                     ),
                                     child: Row(
                                       children: [
-                                        _buildFilter(
-                                          "All (${patients.length + doctors.length})",
-                                          0,
-                                        ),
-                                        _buildFilter(
-                                          "Patients (${patients.length})",
-                                          1,
-                                        ),
-                                        _buildFilter(
-                                          "Doctors (${doctors.length})",
-                                          2,
-                                        ),
+                                        _buildFilter("All (${patients.length + doctors.length})", 0),
+                                        _buildFilter("Patients (${patients.length})", 1),
+                                        _buildFilter("Doctors (${doctors.length})", 2),
                                       ],
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
+                            );
+                            }),
                                   
                             const SizedBox(height: 16),
 
                             ...filteredUsers.map((user) {
                               final isDoctor = doctors.any((d) => d["email"] == user["email"]);
-
+                              final theme = Theme.of(context);
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: theme.cardColor,
                                   borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(
-                                    color: const Color(0xFFE5E7EB),
-                                  ),
+                                  border: Border.all(color: theme.dividerColor),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -791,11 +748,9 @@ class _DashboardAdminState extends State<dashboard_admin> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFFEFF1F9),
-            ),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -374,6 +374,8 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isLocked = _chatStatus == 'locked';
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     // Build initials for avatar
     final parts = widget.title.trim().split(' ');
@@ -384,11 +386,11 @@ class _ChatScreenState extends State<ChatScreen> {
             : '?';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
-        leading: const BackButton(color: Color(0xFF0F172A)),
+        leading: BackButton(color: theme.iconTheme.color),
         titleSpacing: 0,
         title: Row(
           children: [
@@ -403,10 +405,10 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             const SizedBox(width: 10),
             Text(widget.title,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A))),
+                    color: theme.textTheme.bodyLarge?.color)),
           ],
         ),
         actions: [
@@ -452,17 +454,19 @@ class _ChatScreenState extends State<ChatScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-            color: Colors.blue.shade50,
+            color: isDark ? const Color(0xFF1E3A5F) : Colors.blue.shade50,
             child: Row(
               children: [
                 Icon(Icons.lock_outline_rounded,
-                    size: 14, color: Colors.blue.shade700),
+                    size: 14,
+                    color: isDark ? Colors.blue.shade200 : Colors.blue.shade700),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     'End-to-end encrypted conversation. Your privacy is protected.',
                     style: TextStyle(
-                        fontSize: 11, color: Colors.blue.shade700),
+                        fontSize: 11,
+                        color: isDark ? Colors.blue.shade200 : Colors.blue.shade700),
                   ),
                 ),
               ],
@@ -557,7 +561,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     decoration: BoxDecoration(
                                       color: isMe
                                           ? const Color(0xFF2563EB)
-                                          : Colors.white,
+                                          : (isDark ? const Color(0xFF1E293B) : Colors.white),
                                       borderRadius: BorderRadius.only(
                                         topLeft:
                                             const Radius.circular(16),
@@ -595,7 +599,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                             style: TextStyle(
                                               color: isMe
                                                   ? Colors.white
-                                                  : const Color(0xFF0F172A),
+                                                  : (isDark ? const Color(0xFFE2E8F0) : const Color(0xFF0F172A)),
                                               fontSize: 14,
                                               height: 1.4,
                                             ),
@@ -672,9 +676,8 @@ class _ChatScreenState extends State<ChatScreen> {
           // ── Selected file preview ──────────────────────────
           if (_selectedFile != null)
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 6),
-              color: Colors.grey.shade100,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade100,
               child: Row(
                 children: [
                   const Icon(Icons.attach_file,
@@ -702,7 +705,7 @@ class _ChatScreenState extends State<ChatScreen> {
           Container(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.appBarTheme.backgroundColor ?? theme.cardColor,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
@@ -718,15 +721,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Row(
                     children: [
-                      // Text field
                       Expanded(
                         child: Container(
                           height: 48,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8F9FA),
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFF8F9FA),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: const Color(0xFFE5E7EB)),
+                                color: isDark ? const Color(0xFF475569) : const Color(0xFFE5E7EB)),
                           ),
                           child: Row(
                             children: [

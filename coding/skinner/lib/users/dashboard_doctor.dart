@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import 'package:skinner/theme/theme_provider.dart';
 import 'package:skinner/authuntication/signin.dart';
 import 'package:skinner/screens/chat_list_screen.dart';
 import 'package:skinner/screens/chatbot.dart';
@@ -71,7 +72,7 @@ class _DoctorPortalScreenState extends State<DoctorPortalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _buildAppBar(context),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
@@ -140,6 +141,18 @@ class _DoctorPortalScreenState extends State<DoctorPortalScreen> {
         ],
       ),
       actions: [
+        Consumer<ThemeProvider>(
+          builder: (context, themeProvider, _) => IconButton(
+            onPressed: themeProvider.toggleTheme,
+            icon: Icon(
+              themeProvider.isDark
+                  ? Icons.light_mode_outlined
+                  : Icons.dark_mode_outlined,
+              size: 20,
+            ),
+            tooltip: themeProvider.isDark ? 'Light mode' : 'Dark mode',
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.only(right: 12),
           child: OutlinedButton.icon(
@@ -189,15 +202,20 @@ class _DoctorPortalScreenState extends State<DoctorPortalScreen> {
     required int index,
   }) {
     final bool isActive = _activeTabIndex == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () => setState(() => _activeTabIndex = index),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
-          color: isActive ? Colors.black : Colors.white,
+          color: isActive
+              ? (isDark ? Colors.white : Colors.black)
+              : (isDark ? const Color(0xFF1E293B) : Colors.white),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isActive ? Colors.black : Colors.grey.shade300,
+            color: isActive
+                ? (isDark ? Colors.white : Colors.black)
+                : (isDark ? const Color(0xFF334155) : Colors.grey.shade300),
           ),
         ),
         child: Row(
@@ -205,14 +223,18 @@ class _DoctorPortalScreenState extends State<DoctorPortalScreen> {
           children: [
             Icon(icon,
                 size: 14,
-                color: isActive ? Colors.white : Colors.black87),
+                color: isActive
+                    ? (isDark ? Colors.black : Colors.white)
+                    : (isDark ? Colors.white70 : Colors.black87)),
             const SizedBox(width: 6),
             Text(
               title,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: isActive ? Colors.white : Colors.black87,
+                color: isActive
+                    ? (isDark ? Colors.black : Colors.white)
+                    : (isDark ? Colors.white70 : Colors.black87),
               ),
             ),
           ],
@@ -274,12 +296,13 @@ class _DoctorPortalScreenState extends State<DoctorPortalScreen> {
     required Color iconColor,
     required IconData icon,
   }) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

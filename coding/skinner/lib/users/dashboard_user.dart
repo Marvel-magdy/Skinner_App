@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:provider/provider.dart';
+import 'package:skinner/theme/theme_provider.dart';
 import 'package:skinner/authuntication/signin.dart';
 import 'package:skinner/screens/chat_list_screen.dart';
 import 'package:skinner/screens/chatbot.dart';
@@ -16,6 +18,7 @@ import 'package:dio/dio.dart';
 import 'package:skinner/services/analysis_adapter.dart';
 import 'package:skinner/models/analysis_result.dart';
 import 'package:skinner/services/image_upload_helper.dart';
+import 'package:skinner/l10n/app_translations.dart';
 
 class DashboardUser extends StatefulWidget {
   const DashboardUser({super.key});
@@ -386,8 +389,10 @@ class _DashboardUserState extends State<DashboardUser> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           // Header
@@ -488,27 +493,27 @@ class _DashboardUserState extends State<DashboardUser> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).appBarTheme.backgroundColor ?? Colors.white,
       padding: const EdgeInsets.fromLTRB(20, 40, 20, 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Skinner',
-                    style: TextStyle(
+                    AppL10n.of(context, AppStrings.appName),
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF2C67FF),
                     ),
                   ),
                   Text(
-                    'Patient Portal',
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                    AppL10n.of(context, AppStrings.patientPortal),
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                 ],
               ),
@@ -521,39 +526,56 @@ class _DashboardUserState extends State<DashboardUser> {
                 (route) => false,
               );
             },
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.logout_outlined, size: 18, color: Colors.grey),
-                SizedBox(width: 4),
+                const Icon(Icons.logout_outlined, size: 18, color: Colors.grey),
+                const SizedBox(width: 4),
                 Text(
-                  'Logout',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  AppL10n.of(context, AppStrings.logout),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, _) => IconButton(
+              onPressed: themeProvider.toggleTheme,
+              icon: Icon(
+                themeProvider.isDark
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
+                size: 20,
+                color: Colors.grey,
+              ),
+              tooltip: themeProvider.isDark ? 'Light mode' : 'Dark mode',
+            ),
+          ),
+          _buildLanguageButton(context),
         ],
       ),
     );
   }
 
   Widget _buildTabBar() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      color: Colors.white,
+      color: theme.appBarTheme.backgroundColor ?? theme.cardColor,
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0F0F0),
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFF0F0F0),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
-            _buildSegmentedTab(Icons.cloud_upload_outlined, 'Upload', 0),
-            _buildSegmentedTab(Icons.analytics_outlined, 'Analysis', 1),
-            _buildSegmentedTab(Icons.calendar_today_outlined, 'Doctors', 2),
+            _buildSegmentedTab(Icons.cloud_upload_outlined, AppL10n.of(context, AppStrings.upload), 0),
+            _buildSegmentedTab(Icons.analytics_outlined, AppL10n.of(context, AppStrings.analysis), 1),
+            _buildSegmentedTab(Icons.calendar_today_outlined, AppL10n.of(context, AppStrings.doctors), 2),
             _buildChatTab(3),
-            _buildSegmentedTab(Icons.person_outline, 'Patient', 4),
+            _buildSegmentedTab(Icons.person_outline, AppL10n.of(context, AppStrings.patient), 4),
           ],
         ),
       ),
@@ -561,6 +583,10 @@ class _DashboardUserState extends State<DashboardUser> {
   }
 
   Widget _buildSegmentedTab(IconData icon, String label, int index) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final activeColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final activeTextColor = isDark ? Colors.white : Colors.black87;
     bool isActive = _currentTabIndex == index;
     return Expanded(
       child: GestureDetector(
@@ -569,7 +595,7 @@ class _DashboardUserState extends State<DashboardUser> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: isActive
               ? BoxDecoration(
-                  color: Colors.white,
+                  color: activeColor,
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
@@ -586,7 +612,7 @@ class _DashboardUserState extends State<DashboardUser> {
               Icon(
                 icon,
                 size: 16,
-                color: isActive ? Colors.black87 : Colors.grey,
+                color: isActive ? activeTextColor : Colors.grey,
               ),
               const SizedBox(width: 6),
               Text(
@@ -594,7 +620,7 @@ class _DashboardUserState extends State<DashboardUser> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                  color: isActive ? Colors.black87 : Colors.grey,
+                  color: isActive ? activeTextColor : Colors.grey,
                 ),
               ),
             ],
@@ -606,20 +632,24 @@ class _DashboardUserState extends State<DashboardUser> {
 
   /// Chat tab — identical to _buildSegmentedTab but with an unread badge
   Widget _buildChatTab(int index) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final activeColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final activeTextColor = isDark ? Colors.white : Colors.black87;
     final bool isActive = _currentTabIndex == index;
     return Expanded(
       child: GestureDetector(
         onTap: () {
           setState(() {
             _currentTabIndex = index;
-            _unreadCount = 0; // clear badge when user opens chat
+            _unreadCount = 0;
           });
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: isActive
               ? BoxDecoration(
-                  color: Colors.white,
+                  color: activeColor,
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
@@ -639,7 +669,7 @@ class _DashboardUserState extends State<DashboardUser> {
                   Icon(
                     Icons.chat_bubble_outline_rounded,
                     size: 16,
-                    color: isActive ? Colors.black87 : Colors.grey,
+                    color: isActive ? activeTextColor : Colors.grey,
                   ),
                   if (_unreadCount > 0)
                     Positioned(
@@ -671,11 +701,11 @@ class _DashboardUserState extends State<DashboardUser> {
               ),
               const SizedBox(width: 6),
               Text(
-                'Chat',
+                AppL10n.of(context, AppStrings.chat),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                  color: isActive ? Colors.black87 : Colors.grey,
+                  color: isActive ? activeTextColor : Colors.grey,
                 ),
               ),
             ],
@@ -686,39 +716,42 @@ class _DashboardUserState extends State<DashboardUser> {
   }
 
   Widget _buildInstructionBox() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
+        color: isDark ? const Color(0xFF1E3A5F) : const Color(0xFFEEF2FF),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFD1D5F0)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C67FF).withOpacity(0.4) : const Color(0xFFD1D5F0),
+        ),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.info_outline, size: 16, color: Color(0xFF3730A3)),
-              SizedBox(width: 8),
+              const Icon(Icons.info_outline, size: 16, color: Color(0xFF3730A3)),
+              const SizedBox(width: 8),
               Text(
-                'For best results:',
+                AppL10n.of(context, AppStrings.bestResults),
                 style: TextStyle(
-                  color: Color(0xFF3730A3),
+                  color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF3730A3),
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Padding(
-            padding: EdgeInsets.only(left: 24),
+            padding: const EdgeInsets.only(left: 24),
             child: Text(
-              '• Ensure good lighting\n'
-              '• Take photo perpendicular\n'
-              '• Avoid using flash',
+              '${AppL10n.of(context, AppStrings.goodLighting)}\n'
+              '${AppL10n.of(context, AppStrings.perpendicular)}\n'
+              '${AppL10n.of(context, AppStrings.noFlash)}',
               style: TextStyle(
-                color: Color(0xFF3730A3),
+                color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF3730A3),
                 fontSize: 12,
                 height: 1.6,
               ),
@@ -730,21 +763,24 @@ class _DashboardUserState extends State<DashboardUser> {
   }
 
   Widget _buildMainContentCard() {
+    final theme = Theme.of(context);
+    final cardColor = theme.cardColor;
+    final borderColor = theme.dividerColor;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             _selectedImage == null
-                ? 'Upload Skin Image'
-                : 'Saved Image - Ready for Analysis',
+                ? AppL10n.of(context, AppStrings.uploadSkinImage)
+                : AppL10n.of(context, AppStrings.savedImageReady),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
 
@@ -766,8 +802,8 @@ class _DashboardUserState extends State<DashboardUser> {
 
             _buildSelectionCard(
               Icons.cloud_upload_outlined,
-              'Upload from Device',
-              'Click to browse files',
+              AppL10n.of(context, AppStrings.uploadFromDevice),
+              AppL10n.of(context, AppStrings.clickToBrowse),
               Colors.blue,
               _pickImageFromGallery,
             ),
@@ -776,18 +812,18 @@ class _DashboardUserState extends State<DashboardUser> {
 
             _buildSelectionCard(
               Icons.camera_alt_outlined,
-              'Take Photo',
-              'Use your camera',
+              AppL10n.of(context, AppStrings.takePhoto),
+              AppL10n.of(context, AppStrings.useCamera),
               Colors.green,
               _takePhoto,
             ),
 
             const SizedBox(height: 12),
 
-            const Center(
+            Center(
               child: Text(
-                'Supported formats: JPG, PNG • Max size: 10MB',
-                style: TextStyle(color: Colors.grey, fontSize: 11),
+                AppL10n.of(context, AppStrings.supportedFormats),
+                style: const TextStyle(color: Colors.grey, fontSize: 11),
               ),
             ),
           ] else ...[
@@ -825,7 +861,7 @@ class _DashboardUserState extends State<DashboardUser> {
                       )
                     : const Icon(Icons.auto_awesome, color: Colors.white),
                 label: Text(
-                  _isAnalyzing ? 'Analyzing...' : 'Analyze Image with AI',
+                  _isAnalyzing ? AppL10n.of(context, AppStrings.analyzing) : AppL10n.of(context, AppStrings.analyzeWithAI),
                   style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ),
@@ -840,7 +876,7 @@ class _DashboardUserState extends State<DashboardUser> {
                     _selectedImage = null;
                   });
                 },
-                child: const Text('Choose Another Image'),
+                child: Text(AppL10n.of(context, AppStrings.chooseAnother)),
               ),
             ),
           ],
@@ -856,15 +892,16 @@ class _DashboardUserState extends State<DashboardUser> {
     Color color,
     VoidCallback onTap,
   ) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: theme.dividerColor),
         ),
         child: Column(
           children: [
@@ -889,30 +926,31 @@ class _DashboardUserState extends State<DashboardUser> {
   }
 
   Widget _buildPreviousAnalysesSection() {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.history_edu, size: 20),
-              SizedBox(width: 10),
+              const Icon(Icons.history_edu, size: 20),
+              const SizedBox(width: 10),
               Text(
-                'Previous Analyses',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                AppL10n.of(context, AppStrings.previousAnalyses),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),
             ],
           ),
           const SizedBox(height: 16),
           analysisHistory.isEmpty
-              ? const Center(child: Text("No analyses found"))
+              ? Center(child: Text(AppL10n.of(context, AppStrings.noAnalyses)))
               : Column(
                   children: analysisHistory.take(3).map((item) {
                     return Padding(
@@ -927,25 +965,25 @@ class _DashboardUserState extends State<DashboardUser> {
   }
 
   Widget _buildAnalysisResultCard(AnalysisResult item) {
+    final theme = Theme.of(context);
     const String baseUrl = 'http://187.127.227.63';
     final String fullImageUrl = item.imageUrl.isNotEmpty ? '$baseUrl${item.imageUrl}' : '';
     final String dateStr = item.analyzedAt.toString().substring(0, 10);
 
     return GestureDetector(
       onTap: () {
-        // Load this history item into the analysis screen and navigate to it
         setState(() {
           analysisResult = item;
-          _selectedImage = null; // no local file for history items
+          _selectedImage = null;
           _currentTabIndex = 1;
         });
       },
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade100),
+          border: Border.all(color: theme.dividerColor),
         ),
         child: Row(
           children: [
@@ -963,7 +1001,7 @@ class _DashboardUserState extends State<DashboardUser> {
                         return Container(
                           width: 56,
                           height: 56,
-                          color: Colors.grey.shade200,
+                          color: theme.dividerColor,
                           child: const Center(
                             child: SizedBox(
                               width: 20,
@@ -1009,9 +1047,9 @@ class _DashboardUserState extends State<DashboardUser> {
                       color: Colors.green.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text(
-                      'completed',
-                      style: TextStyle(
+                    child: Text(
+                      AppL10n.of(context, AppStrings.completed),
+                      style: const TextStyle(
                         color: Colors.green,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -1023,7 +1061,7 @@ class _DashboardUserState extends State<DashboardUser> {
             ),
 
             // Arrow hint
-            Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
+            Icon(Icons.chevron_right_rounded, color: theme.dividerColor),
           ],
         ),
       ),
@@ -1042,15 +1080,58 @@ class _DashboardUserState extends State<DashboardUser> {
     );
   }
 
+  Widget _buildLanguageButton(BuildContext context) {
+    return Consumer<LocaleProvider>(
+      builder: (context, localeProvider, _) {
+        final currentCode = localeProvider.locale.languageCode;
+        final currentLang = LocaleProvider.supportedLanguages.firstWhere(
+          (l) => l['code'] == currentCode,
+          orElse: () => LocaleProvider.supportedLanguages.first,
+        );
+        return GestureDetector(
+          onTap: () async {
+            final selected = await showDialog<Locale>(
+              context: context,
+              builder: (_) => const LanguagePickerDialog(),
+            );
+            if (selected != null) {
+              localeProvider.setLocale(selected);
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(currentLang['flag']!, style: const TextStyle(fontSize: 16)),
+                const SizedBox(width: 4),
+                Text(
+                  currentCode.toUpperCase(),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const Icon(Icons.arrow_drop_down, size: 16, color: Colors.grey),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildAnalysisScreen() {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: theme.dividerColor),
         ),
         child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
