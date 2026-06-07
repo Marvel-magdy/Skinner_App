@@ -399,7 +399,7 @@ class _DoctorCard extends StatelessWidget {
                 Text("Consultation Fee",
                     style: TextStyle(fontSize: 12, color: textSecondary)),
                 const SizedBox(height: 2),
-                Text("\$$_fee",
+                Text("EGP $_fee",
                     style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,

@@ -1,6 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skinner/authuntication/signin.dart';
+import 'package:skinner/services/auth_service.dart';
+import 'package:skinner/users/dashboard_admin.dart';
+import 'package:skinner/users/dashboard_doctor.dart';
+import 'package:skinner/users/dashboard_user.dart';
 
 class Splashscreen extends StatefulWidget {
   const Splashscreen({super.key});
@@ -20,7 +25,7 @@ class _SplashscreenState extends State<Splashscreen>
 
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 9000),
     );
     _fadeAnim = CurvedAnimation(
       parent: _animController,
@@ -28,11 +33,34 @@ class _SplashscreenState extends State<Splashscreen>
     );
     _animController.forward();
 
-    Future.delayed(const Duration(seconds: 10), () {
+    Future.delayed(const Duration(seconds: 10), () async {
+      if (!mounted) return;
+
+      // Check for a saved session
+      final prefs = await SharedPreferences.getInstance();
+      final savedToken = prefs.getString('token') ?? '';
+      final savedRole  = prefs.getString('role')  ?? '';
+
+      Widget destination;
+      if (savedToken.isNotEmpty) {
+        // Restore the in-memory token so all API calls work immediately
+        adminToken = savedToken;
+
+        if (savedRole == 'Administrator') {
+          destination = const dashboard_admin();
+        } else if (savedRole == 'Doctor') {
+          destination = const DoctorPortalScreen();
+        } else {
+          destination = const DashboardUser();
+        }
+      } else {
+        destination = const SignIn();
+      }
+
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const SignIn()),
+        MaterialPageRoute(builder: (_) => destination),
       );
     });
   }
@@ -128,7 +156,7 @@ class _SplashscreenState extends State<Splashscreen>
                 children: [
                   // Logo image
                   Image.asset(
-                    'assets/skinner.png',
+                    'assets/Gemini_Generated_Image_10710u10710u1071.png',
                     width: size.width * 0.42,
                   ),
                   const SizedBox(height: 18),

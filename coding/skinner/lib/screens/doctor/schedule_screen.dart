@@ -53,12 +53,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   final _addressCtrl = TextEditingController();
   final _feeCtrl     = TextEditingController();
 
-  String? _token;
   Future<String> _getToken() async {
-    if (_token != null) return _token!;
+    // Always prefer the in-memory global token (set immediately after login).
+    if (adminToken != null && adminToken!.isNotEmpty) return adminToken!;
+    // Fall back to SharedPreferences for post-restart scenarios.
     final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('token') ?? adminToken ?? '';
-    return _token!;
+    return prefs.getString('token') ?? '';
   }
 
   @override
@@ -316,7 +316,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             style: const TextStyle(
                 fontSize: 10, letterSpacing: 0.8, color: Color(0xFF9CA3AF))),
         const SizedBox(height: 3),
-        Text('\$${fee.toStringAsFixed(0)}',
+        Text('EGP ${fee.toStringAsFixed(0)}',
             style: const TextStyle(
                 fontSize: 15, fontWeight: FontWeight.bold,
                 color: Color(0xFF2563EB))),
@@ -727,7 +727,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               _dialogField('Phone Number', _phoneCtrl, hint: '+1 (555) 000-0000'),
               _dialogField('clinic address', _addressCtrl, hint: 'add'),
               _dialogField('Consultation Fee', _feeCtrl, hint: '150',
-                  suffixText: '\$'),
+                  suffixText: 'EGP'),
               const SizedBox(height: 16),
               Row(
                 children: [

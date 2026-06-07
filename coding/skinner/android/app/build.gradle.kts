@@ -16,7 +16,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "17"
     }
 
     defaultConfig {
@@ -41,4 +41,7 @@ android {
 
 flutter {
     source = "../.."
+}
+dependencies {
+    implementation("androidx.appcompat:appcompat:1.4.0")
 }

@@ -41,21 +41,49 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _myId;
   String? _myRole;
 
+  /// Resolved case data — starts with widget.caseData, enriched from API if sparse
+  Map<String, dynamic>? _resolvedCaseData;
+
   /// Stores the latest submitted report text (shown in the "Report Submitted" card)
   String? _submittedReport;
 
   @override
   void initState() {
     super.initState();
+    // Seed with whatever was passed in
+    if (widget.caseData != null) {
+      _resolvedCaseData = Map<String, dynamic>.from(widget.caseData!);
+    }
     _loadUserIdentity().then((_) {
       _fetchMessages();
       _markAsRead();
     });
+    _fetchCaseSummary(); // enrich case data from API
     // Poll for new messages every 2 seconds
     _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       _fetchMessages(showLoading: false);
       _markAsRead();
     });
+  }
+
+  /// Fetch the linked case/analysis summary for this chat and merge into state.
+  Future<void> _fetchCaseSummary() async {
+    if (widget.chatId.isEmpty) return;
+    try {
+      final summary = await _chatService.getCaseSummary(chatId: widget.chatId);
+      if (summary != null && summary.isNotEmpty && mounted) {
+        setState(() {
+          // Merge: API data takes priority for analysis fields,
+          // but keep existing fields like doctor_name / patient_name
+          final merged = <String, dynamic>{};
+          if (_resolvedCaseData != null) merged.addAll(_resolvedCaseData!);
+          merged.addAll(summary);
+          _resolvedCaseData = merged;
+        });
+      }
+    } catch (_) {
+      // Silent — card just won't show if data unavailable
+    }
   }
 
   /// Notify backend that the user has seen all messages in this chat.
@@ -205,28 +233,43 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadUserIdentity() async {
-    // 1. Try decoding JWT from token stored in SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+
+    // 1. Read api_role saved at login — instant, no network needed
+    //    api_role is lowercase: 'patient' | 'doctor' | 'admin'
+    final savedApiRole = prefs.getString('api_role') ?? '';
+    if (savedApiRole.isNotEmpty) {
+      _myRole = savedApiRole;
+    }
+
+    // 2. Try decoding JWT to get the user ID
     try {
-      final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token') ?? '';
       if (token.isNotEmpty) {
         final payload = _decodeJwt(token);
-        _myId =
+        final id =
             payload['id']?.toString() ??
             payload['userId']?.toString() ??
             payload['user_id']?.toString() ??
             payload['sub']?.toString();
-        _myRole =
-            payload['role']?.toString() ?? payload['user_role']?.toString();
+        if (id != null && id.isNotEmpty) {
+          _myId = id;
+        }
+        // Also pick up role from JWT if api_role wasn't saved
+        if (_myRole == null || _myRole!.isEmpty) {
+          _myRole =
+              (payload['role']?.toString() ??
+               payload['user_role']?.toString() ?? '')
+              .toLowerCase();
+        }
       }
     } catch (e) {
       debugPrint("JWT decode failed: $e");
     }
 
-    // 2. Fallback to fetching profile if JWT doesn't yield id/role
-    if (_myId == null || _myRole == null) {
+    // 3. Fallback: fetch profile if we still don't have an ID
+    if (_myId == null || _myId!.isEmpty) {
       try {
-        final prefs = await SharedPreferences.getInstance();
         final token = prefs.getString('token') ?? '';
         final dio = Dio(BaseOptions(baseUrl: 'https://api.skinnerai.site'));
         final response = await dio.get(
@@ -235,20 +278,20 @@ class _ChatScreenState extends State<ChatScreen> {
         );
         if (response.statusCode == 200) {
           final data = response.data['data'] ?? response.data;
-          setState(() {
-            _myId =
-                data['id']?.toString() ??
-                data['user_id']?.toString() ??
-                data['_id']?.toString();
-            _myRole = data['role']?.toString();
-          });
+          _myId =
+              data['id']?.toString() ??
+              data['user_id']?.toString() ??
+              data['_id']?.toString();
+          if (_myRole == null || _myRole!.isEmpty) {
+            _myRole = (data['role']?.toString() ?? '').toLowerCase();
+          }
         }
       } catch (e) {
         debugPrint("Failed to fetch profile: $e");
       }
-    } else {
-      setState(() {});
     }
+
+    if (mounted) setState(() {});
   }
 
   Map<String, dynamic> _decodeJwt(String token) {
@@ -265,79 +308,42 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   /// Determine if the current user sent this message.
+  /// Priority:  optimistic flag → is_mine flag → sender_id vs _myId → sender_role vs _myRole
   bool _isMyMessage(Map<String, dynamic> msg) {
-    // Check for optimistic messages we added locally
+    // 1. Messages we added optimistically are always ours
     if (msg['_optimistic'] == true) return true;
-    // Check common local patterns
-    if (msg['sender'] == 'me') return true;
-    // Check is_mine flag if returned by the backend
-    if (msg['is_mine'] == true) return true;
 
-    // Compare with logged-in user's ID
-    if (_myId != null) {
+    // 2. Backend explicit flag
+    if (msg['is_mine'] == true) return true;
+    if (msg['sender'] == 'me') return true;
+
+    // 3. ID comparison — most reliable when available
+    if (_myId != null && _myId!.isNotEmpty) {
       final senderId =
           msg['sender_id']?.toString() ??
           msg['senderId']?.toString() ??
           msg['user_id']?.toString() ??
-          msg['userId']?.toString() ??
-          msg['sender']?.toString();
-      if (senderId != null && senderId == _myId) {
-        return true;
+          msg['userId']?.toString();
+      if (senderId != null && senderId.isNotEmpty) {
+        return senderId == _myId;
       }
     }
 
-    // Compare with logged-in user's role
-    if (_myRole != null) {
-      final senderRole =
-          msg['sender_role']?.toString() ??
-          msg['senderRole']?.toString() ??
-          msg['role']?.toString() ??
-          msg['sender_type']?.toString();
-      if (senderRole != null &&
-          senderRole.toLowerCase() == _myRole!.toLowerCase()) {
-        return true;
+    // 4. Role comparison — fallback when IDs are unavailable.
+    //    _myRole is always lowercase ('patient' | 'doctor' | 'admin')
+    if (_myRole != null && _myRole!.isNotEmpty) {
+      final senderRole = (msg['sender_role']?.toString() ??
+              msg['senderRole']?.toString() ??
+              msg['role']?.toString() ??
+              msg['sender_type']?.toString() ??
+              '')
+          .toLowerCase();
+      if (senderRole.isNotEmpty) {
+        return senderRole == _myRole;
       }
     }
 
     return false;
-  }
-
-  /// Determine if the message belongs to the patient (to align on left).
-  bool _isPatientMessage(Map<String, dynamic> msg) {
-    final senderRole =
-        msg['sender_role']?.toString() ??
-        msg['senderRole']?.toString() ??
-        msg['role']?.toString() ??
-        msg['sender_type']?.toString();
-
-    // If it's optimistic or has local self-identifiers, check current user's role
-    if (msg['_optimistic'] == true ||
-        senderRole == 'self' ||
-        senderRole == 'me' ||
-        msg['sender'] == 'me') {
-      if (_myRole != null) {
-        return _myRole!.toLowerCase() == 'patient';
-      }
-      return true; // Default fallback if role is unknown: assume patient
-    }
-
-    if (senderRole != null) {
-      final roleLower = senderRole.toLowerCase();
-      if (roleLower == 'patient') return true;
-      if (roleLower == 'doctor') return false;
-    }
-
-    // Fallback using logged-in user's role and isMe
-    final isMe = _isMyMessage(msg);
-    if (_myRole != null) {
-      if (_myRole!.toLowerCase() == 'patient') {
-        return isMe; // If logged in as patient, my messages are patient
-      } else if (_myRole!.toLowerCase() == 'doctor') {
-        return !isMe; // If logged in as doctor, other messages are patient
-      }
-    }
-
-    return isMe;
   }
 
   String _getMessageText(Map<String, dynamic> msg) {
@@ -412,6 +418,34 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         actions: [
+          // ── Write Report button in AppBar ─────────────────
+          TextButton.icon(
+            onPressed: () {
+              final caseData = _resolvedCaseData;
+              final appointmentId =
+                  (caseData?['appointment_id'] ?? '').toString();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MedicalReportScreen(
+                    appointmentId: appointmentId,
+                    initialText: _submittedReport,
+                    onSubmitted: (text) {
+                      if (mounted) setState(() => _submittedReport = text);
+                    },
+                  ),
+                ),
+              );
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: theme.textTheme.bodyLarge?.color,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+            icon: const Icon(Icons.edit_note_rounded, size: 18),
+            label: const Text('Report',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          ),
+          // ── Secure / Locked badge ─────────────────────────
           Container(
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -473,71 +507,28 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-          // ── Write Report button (visible for all) ─────────
-          Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 8),
-            child: ElevatedButton(
-              onPressed: () {
-                final caseData = widget.caseData;
-                final appointmentId =
-                    (caseData?['appointment_id'] ?? '').toString();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MedicalReportScreen(
-                      appointmentId: appointmentId,
-                      initialText: _submittedReport,
-                      onSubmitted: (text) {
-                        if (mounted) setState(() => _submittedReport = text);
-                      },
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F172A),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 10),
-              ),
-              child: const Text('Write Report',
-                  style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600)),
-            ),
-          ),
+          // ── Clinical Summary (pinned, always visible) ──────
+          _buildClinicalSummary(isDark, theme),
 
           // ── Messages list ──────────────────────────────────
           Expanded(
             child: _isLoading && _messages.isEmpty
                 ? const Center(child: CircularProgressIndicator())
-                : _messages.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No messages yet.\nStart the conversation!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                        itemCount: _messages.length,
-                        itemBuilder: (context, index) {
-                          final msg =
-                              Map<String, dynamic>.from(_messages[index]);
-                          final isPatient   = _isPatientMessage(msg);
-                          final messageText = _getMessageText(msg);
-                          final fileUrl     = _getFileUrl(msg);
-                          final time        = _formatTime(
-                              msg['created_at']?.toString() ??
-                                  msg['createdAt']?.toString());
-                          final isMe        = _isMyMessage(msg);
-                          final isOptimistic = msg['_optimistic'] == true;
-                          final isRead      = _isMessageRead(msg);
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final msg = Map<String, dynamic>.from(
+                          _messages[index]);
+                      final messageText = _getMessageText(msg);
+                      final fileUrl     = _getFileUrl(msg);
+                      final time        = _formatTime(
+                          msg['created_at']?.toString() ??
+                              msg['createdAt']?.toString());
+                      final isMe        = _isMyMessage(msg);
+                      final isOptimistic = msg['_optimistic'] == true;
+                      final isRead      = _isMessageRead(msg);
 
                           return Align(
                             alignment: isMe
@@ -553,6 +544,24 @@ class _ChatScreenState extends State<ChatScreen> {
                                     ? CrossAxisAlignment.end
                                     : CrossAxisAlignment.start,
                                 children: [
+                                  // Sender label (only for received messages)
+                                  if (!isMe)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 4, bottom: 2),
+                                      child: Text(
+                                        _myRole == 'patient'
+                                            ? 'Doctor'
+                                            : 'Patient',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark
+                                              ? const Color(0xFF93C5FD)
+                                              : const Color(0xFF2563EB),
+                                        ),
+                                      ),
+                                    ),
                                   // Bubble
                                   Container(
                                     margin: const EdgeInsets.only(top: 4),
@@ -870,7 +879,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            final caseData = widget.caseData;
+                            final caseData = _resolvedCaseData;
                             final appointmentId =
                                 (caseData?['appointment_id'] ?? '').toString();
                             Navigator.push(
@@ -933,4 +942,275 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
       );
+
+  // ── Clinical Summary card shown at the top of the chat ───────────────────
+  Widget _buildClinicalSummary(bool isDark, ThemeData theme) {
+    final caseData = _resolvedCaseData;
+    if (caseData == null) return const SizedBox.shrink();
+
+    // Extract fields
+    final patientName = caseData['patient_name']?.toString() ?? '';
+    final gender = caseData['gender']?.toString() ?? caseData['patient_gender']?.toString() ?? '';
+    final age = caseData['age']?.toString() ?? caseData['patient_age']?.toString() ?? '';
+    final prediction = caseData['skin_disease_classification']?.toString() ??
+        caseData['ai_diagnosis']?.toString() ?? '';
+    final rawConf = caseData['confidence'] ?? caseData['ai_confidence'] ?? 0;
+    final confidence = (rawConf is num) ? rawConf.toDouble() : 0.0;
+    final rawDate = caseData['created_at']?.toString() ??
+        caseData['analysis_date']?.toString() ?? '';
+    final skinImageUrl = caseData['skin_image_upload']?.toString() ??
+        caseData['image_url']?.toString() ?? '';
+
+    // Build date string
+    String dateStr = '';
+    if (rawDate.isNotEmpty) {
+      try {
+        final dt = DateTime.parse(rawDate).toLocal();
+        const months = ['Jan','Feb','Mar','Apr','May','Jun',
+                        'Jul','Aug','Sep','Oct','Nov','Dec'];
+        dateStr = '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+      } catch (_) {
+        dateStr = rawDate.length >= 10 ? rawDate.substring(0, 10) : rawDate;
+      }
+    }
+
+    // Patient display
+    String patientDisplay = patientName.isNotEmpty ? patientName : 'Patient';
+    if (gender.isNotEmpty && age.isNotEmpty) {
+      final g = gender[0].toUpperCase() + gender.substring(1).toLowerCase();
+      patientDisplay += ' ($g, $age)';
+    }
+
+    // Confidence badge
+    String confLabel;
+    Color confColor;
+    if (confidence >= 0.85) {
+      confLabel = 'HIGH CONFIDENCE';
+      confColor = const Color(0xFFEF4444);
+    } else if (confidence >= 0.60) {
+      confLabel = 'MEDIUM CONFIDENCE';
+      confColor = const Color(0xFFF59E0B);
+    } else {
+      confLabel = 'LOW CONFIDENCE';
+      confColor = const Color(0xFF10B981);
+    }
+
+    // Hide card if no meaningful data
+    if (prediction.isEmpty && patientName.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2C67FF).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.description_outlined,
+                    color: Color(0xFF2C67FF), size: 18),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Clinical Summary',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textTheme.bodyLarge?.color)),
+                  const Text('AI-Powered',
+                      style: TextStyle(fontSize: 11, color: Colors.grey)),
+                ],
+              ),
+            ],
+          ),
+
+          Divider(height: 24, color: theme.dividerColor),
+
+          // Patient + Date row
+          Row(
+            children: [
+              Expanded(
+                child: _summaryField('Patient', patientDisplay, theme),
+              ),
+              if (dateStr.isNotEmpty)
+                Expanded(
+                  child: _summaryField('Analysis Date', dateStr, theme),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // AI Prediction + Confidence row
+          if (prediction.isNotEmpty)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('AI Prediction',
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade500)),
+                      const SizedBox(height: 4),
+                      Text(prediction,
+                          style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2C67FF))),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('confidence',
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade500)),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            '${(confidence * 100).toStringAsFixed(0)}%',
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: theme.textTheme.bodyLarge?.color),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: confidence,
+                                minHeight: 6,
+                                backgroundColor: isDark
+                                    ? const Color(0xFF334155)
+                                    : const Color(0xFFE5E7EB),
+                                valueColor:
+                                    const AlwaysStoppedAnimation<Color>(
+                                        Color(0xFF2C67FF)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+          const SizedBox(height: 16),
+
+          // Confidence Level badge
+          if (prediction.isNotEmpty) ...[
+            Text('Confidence Level',
+                style: TextStyle(
+                    fontSize: 12, color: Colors.grey.shade500)),
+            const SizedBox(height: 6),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: confColor, width: 1.5),
+              ),
+              child: Text(
+                confLabel,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: confColor,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
+
+          // ── View Skin Scan button ─────────────────────────
+          const SizedBox(height: 16),
+          Divider(color: theme.dividerColor, height: 1),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: ElevatedButton.icon(
+              onPressed: skinImageUrl.isNotEmpty
+                  ? () => _showSkinScan(context, skinImageUrl)
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2C67FF),
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey.shade400,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: const Icon(Icons.description_outlined, size: 18),
+              label: const Text('View Skin Scan',
+                  style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryField(String label, String value, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+        const SizedBox(height: 4),
+        Text(value,
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color)),
+      ],
+    );
+  }
+
+  void _showSkinScan(BuildContext context, String imageUrl) {
+    final fullUrl = imageUrl.startsWith('http')
+        ? imageUrl
+        : 'http://187.127.227.63$imageUrl';
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: const EdgeInsets.all(16),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(
+            fullUrl,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Padding(
+              padding: EdgeInsets.all(32),
+              child: Icon(Icons.broken_image_outlined,
+                  color: Colors.grey, size: 64),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

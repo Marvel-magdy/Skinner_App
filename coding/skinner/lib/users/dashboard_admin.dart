@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:skinner/screens/admin_invite_code.dart';
 import 'package:skinner/services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class dashboard_admin extends StatefulWidget {
   const dashboard_admin({super.key});
@@ -475,7 +476,13 @@ class _DashboardAdminState extends State<dashboard_admin> {
                   ),
                   const Spacer(),
                   OutlinedButton.icon(
-                    onPressed: () {
+                    onPressed: () async {
+                      // Clear persisted session on logout
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.remove('token');
+                      await prefs.remove('role');
+                      adminToken = null;
+                      if (!context.mounted) return;
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(
                           builder: (_) => SignIn(),

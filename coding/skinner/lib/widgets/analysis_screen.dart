@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:skinner/models/analysis_result.dart';
+import 'package:skinner/l10n/app_translations.dart';
 import 'package:intl/intl.dart';
 
-class AnalysisScreen extends StatelessWidget {
+class AnalysisScreen extends StatefulWidget {
   final File? selectedImage;
   final AnalysisResult? analysisResult;
-  final VoidCallback? onFindDoctors; // callback to switch to Doctors tab
+  final VoidCallback? onFindDoctors;
 
   const AnalysisScreen({
     super.key,
@@ -16,6 +17,12 @@ class AnalysisScreen extends StatelessWidget {
   });
 
   @override
+  State<AnalysisScreen> createState() => _AnalysisScreenState();
+}
+
+class _AnalysisScreenState extends State<AnalysisScreen> {
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -23,17 +30,17 @@ class AnalysisScreen extends StatelessWidget {
     final borderColor = theme.dividerColor;
     final width = MediaQuery.of(context).size.width;
     
-    if (analysisResult == null) {
+    if (widget.analysisResult == null) {
       return const Center(child: Text('No analysis result available'));
     }
     
-    final disease = analysisResult!.predictedClass;
-    final confidence = analysisResult!.confidence;
-    final confidenceLabel = analysisResult!.confidenceLabel;
-    final description = analysisResult!.description;
-    final recommendations = analysisResult!.recommendations;
-    final alternatives = analysisResult!.alternatives;
-    final formattedDate = DateFormat('M/d/yyyy \'at\' h:mm:ss a').format(analysisResult!.analyzedAt);
+    final disease = widget.analysisResult!.predictedClass;
+    final confidence = widget.analysisResult!.confidence;
+    final confidenceLabel = widget.analysisResult!.confidenceLabel;
+    final description = widget.analysisResult!.description;
+    final recommendations = widget.analysisResult!.recommendations;
+    final alternatives = widget.analysisResult!.alternatives;
+    final formattedDate = DateFormat('M/d/yyyy \'at\' h:mm:ss a').format(widget.analysisResult!.analyzedAt);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -146,18 +153,16 @@ class AnalysisScreen extends StatelessWidget {
 
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: selectedImage != null
-                  // Fresh analysis — show local file
+              child: widget.selectedImage != null
                   ? Image.file(
-                      selectedImage!,
+                      widget.selectedImage!,
                       height: width * 0.6,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     )
-                  : analysisResult!.imageUrl.isNotEmpty
-                      // History item — load from network
+                  : widget.analysisResult!.imageUrl.isNotEmpty
                       ? Image.network(
-                          'http://187.127.227.63${analysisResult!.imageUrl}',
+                          'http://187.127.227.63${widget.analysisResult!.imageUrl}',
                           height: width * 0.6,
                           width: double.infinity,
                           fit: BoxFit.cover,
@@ -340,28 +345,81 @@ class AnalysisScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: onFindDoctors,
-                icon: const Icon(Icons.search_rounded, color: Colors.white),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2C67FF),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                label: const Text(
-                  "Find Recommended Doctors",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
+            // ── Consult a specialist — navigates to Doctors tab ─
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E3A5F) : const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF2C67FF).withOpacity(0.4) : const Color(0xFFBFDBFE),
                 ),
               ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1D4ED8).withOpacity(0.3) : const Color(0xFFDBEAFE),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF2563EB), size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppL10n.of(context, AppStrings.recommendedSpecialists),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          AppL10n.of(context, AppStrings.recommendedSubtitle),
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 1.4,
+                            color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF3B82F6),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: widget.onFindDoctors,
+                            icon: const Icon(Icons.medical_services_outlined, size: 16, color: Colors.white),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0F172A),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            label: Text(
+                              AppL10n.of(context, AppStrings.findDoctors),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
+
+            const SizedBox(height: 24),
           ],
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:skinner/screens/payment_screen.dart';
 import 'package:skinner/services/auth_service.dart';
 import 'package:skinner/services/payment_service.dart';
+
 class AppointmentScreen extends StatefulWidget {
   final Map doctor;
   final VoidCallback onBack;
@@ -10,278 +11,174 @@ class AppointmentScreen extends StatefulWidget {
   const AppointmentScreen({
     super.key,
     required this.doctor,
-        required this.onBack,
-
+    required this.onBack,
   });
 
   @override
-  State<AppointmentScreen> createState() =>
-      _AppointmentScreenState();
+  State<AppointmentScreen> createState() => _AppointmentScreenState();
 }
 
-class _AppointmentScreenState
-    extends State<AppointmentScreen> {
+class _AppointmentScreenState extends State<AppointmentScreen> {
   int selectedDateIndex = 0;
   int selectedTimeIndex = 0;
   List dates = [];
-
-bool isLoadingDates = true;
-
+  bool isLoadingDates = true;
   List times = [];
   bool isLoadingSlots = false;
-@override
-void initState() {
 
-  super.initState();
-
-  getDates();
-}
-Future<void> getDates() async {
-
-
-  try {
-
-    final response =
-        await AuthService()
-            .getAvailableDates(
-
-      token: adminToken!,
-
-      doctorId: widget.doctor[
-          "medical_syndicate_id_card"],
-
-    );
-
-    setState(()  {
-
-      dates =
-          response.data["data"];
-          
-          
-          print(dates);
-
-      isLoadingDates = false;
-
-    });
-    if (dates.isNotEmpty) {
-      print("CALLING GET SLOTS");
-  await getSlots(
-    dates[0]["date"],
-  );
-}
-
-  } catch (e) {
-
-    print(e);
-
-    setState(() {
-
-      isLoadingDates = false;
-
-    });
+  @override
+  void initState() {
+    super.initState();
+    getDates();
   }
-}
-Future<void> getSlots(String date) async {
-print("GET SLOTS STARTED");
-  try {
 
-    setState(() {
-      isLoadingSlots = true;
-    });
-
-    final response =
-        await AuthService()
-            .getAvailableSlots(
-
-      token: adminToken!,
-
-      doctorId: widget.doctor[
-          "medical_syndicate_id_card"],
-
-      date: date,
-    );
-    print("SLOTS RESPONSE:");
-print(response.data);
-
-print("TIMES:");
-print(response.data["slots"]);
-
-    setState(() {
-
-      times =
-          response.data["slots"];
-
-      isLoadingSlots = false;
-
-      selectedTimeIndex = 0;
-
-    });
-
-  } catch (e) {
-
-    print(e);
-
-    setState(() {
-
-      isLoadingSlots = false;
-
-    });
+  Future<void> getDates() async {
+    try {
+      final response = await AuthService().getAvailableDates(
+        token: adminToken!,
+        doctorId: widget.doctor["medical_syndicate_id_card"],
+      );
+      setState(() {
+        dates = response.data["data"];
+        isLoadingDates = false;
+      });
+      if (dates.isNotEmpty) {
+        await getSlots(dates[0]["date"]);
+      }
+    } catch (e) {
+      debugPrint('$e');
+      setState(() => isLoadingDates = false);
+    }
   }
-}
+
+  Future<void> getSlots(String date) async {
+    try {
+      setState(() => isLoadingSlots = true);
+      final response = await AuthService().getAvailableSlots(
+        token: adminToken!,
+        doctorId: widget.doctor["medical_syndicate_id_card"],
+        date: date,
+      );
+      setState(() {
+        times = response.data["slots"];
+        isLoadingSlots = false;
+        selectedTimeIndex = 0;
+      });
+    } catch (e) {
+      debugPrint('$e');
+      setState(() => isLoadingSlots = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    print(times);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor = theme.cardColor;
+    final borderColor = theme.dividerColor;
+
     return Container(
-      color: const Color(0xFFF8FAFC),
+      color: theme.scaffoldBackgroundColor,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-
-            /// Back
-          Align(
-  alignment: Alignment.centerLeft,
-  child: GestureDetector(
-    onTap: widget.onBack,
-    child: const Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.arrow_back, size: 18),
-        SizedBox(width: 8),
-        Text(
-          "Back to Doctors",
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    ),
-  ),
-),
+            // Back
+            Align(
+              alignment: Alignment.centerLeft,
+              child: GestureDetector(
+                onTap: widget.onBack,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.arrow_back, size: 18, color: theme.iconTheme.color),
+                    const SizedBox(width: 8),
+                    Text("Back to Doctors",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: theme.textTheme.bodyLarge?.color)),
+                  ],
+                ),
+              ),
+            ),
 
             const SizedBox(height: 20),
 
-            /// Doctor Card
+            // Doctor Card
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardColor,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: const Color(0xFFE5E7EB),
-                ),
+                border: Border.all(color: borderColor),
               ),
               child: Row(
                 children: [
-
-                   CircleAvatar(
-  radius: 28,
-  backgroundColor: const Color(0xFFDDEAFE),
-  child: Text(
-    widget.doctor["name"]
-        .toString()
-        .split(" ")
-        .take(2)
-        .map((e) => e[0])
-        .join()
-        .toUpperCase(),
-    style: const TextStyle(
-      color: Color(0xFF2563EB),
-      fontWeight: FontWeight.bold,
-    ),
-  ),
-),
-
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: const Color(0xFFDDEAFE),
+                    child: Text(
+                      widget.doctor["name"]
+                          .toString()
+                          .split(" ")
+                          .take(2)
+                          .map((e) => e[0])
+                          .join()
+                          .toUpperCase(),
+                      style: const TextStyle(
+                          color: Color(0xFF2563EB), fontWeight: FontWeight.bold),
+                    ),
+                  ),
                   const SizedBox(width: 12),
-
                   Expanded(
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
-                        Text(
-                          widget.doctor["name"] ?? "",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
-                        ),
-
+                        Text(widget.doctor["name"] ?? "",
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: theme.textTheme.bodyLarge?.color)),
                         const SizedBox(height: 4),
-
-                        Text(
-                          widget.doctor["specialization"] ?? "",
-                          style: const TextStyle(
-                            color: Colors.grey,
-                          ),
-                        ),
-
+                        Text(widget.doctor["specialization"] ?? "",
+                            style: const TextStyle(color: Colors.grey)),
                         const SizedBox(height: 10),
-
                         Row(
-  children: const [
-    Icon(
-      Icons.location_on_outlined,
-      size: 16,
-      color: Colors.grey,
-    ),
-    SizedBox(width: 4),
-    Expanded(
-      child: Text(
-        "Medical Center Downtown",
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: Colors.grey,
-        ),
-      ),
-    ),
-  ],
-)
+                          children: [
+                            const Icon(Icons.location_on_outlined,
+                                size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                widget.doctor["clinic_address"] ?? "Medical Center",
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-
                   Column(
                     children: [
-
                       Container(
-                        padding:
-                            const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFFDCFCE7),
-                          borderRadius:
-                              BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text(
-                          "Verified",
-                          style: TextStyle(
-                            color: Colors.green,
-                          ),
-                        ),
+                        child: const Text("Verified",
+                            style: TextStyle(color: Colors.green)),
                       ),
-
                       const SizedBox(height: 16),
-
                       Text(
-                        '\$${widget.doctor["consultation_fee"]}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight:
-                              FontWeight.bold,
-                        ),
-                      ),
-
-                       Text(
-                       ' \$${widget.doctor["consultation_fee"]}',
+                        'EGP ${widget.doctor["consultation_fee"]}',
                         style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 10,
-                        ),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyLarge?.color),
                       ),
                     ],
                   ),
@@ -290,515 +187,410 @@ print(response.data["slots"]);
             ),
 
             const SizedBox(height: 20),
-            /// Select Date
-Container(
-  width: double.infinity,
-  padding: const EdgeInsets.all(18),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(18),
-    border: Border.all(
-      color: const Color(0xFFE5E7EB),
-    ),
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
 
-      const Row(
-        children: [
-          Icon(Icons.calendar_today_outlined),
-          SizedBox(width: 8),
-          Text(
-            "Select Date",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-
-      const SizedBox(height: 8),
-
-      const Text(
-        "Choose an available date for your appointment",
-        style: TextStyle(
-          color: Colors.grey,
-        ),
-      ),
-
-      const SizedBox(height: 20),
-
-      GridView.builder(
-        shrinkWrap: true,
-        physics:
-            const NeverScrollableScrollPhysics(),
-        itemCount: dates.length,
-        gridDelegate:
-            const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.8,
-        ),
-        itemBuilder: (context, index) {
-
-          bool selected =
-              selectedDateIndex == index;
-              
-
-          return GestureDetector(
-            onTap: () {
-             setState(() {
-  selectedDateIndex = index;
-});
-
-getSlots(
-  dates[index]["date"],
-);
-            },
-            child: Container(
+            // Select Date
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                borderRadius:
-                    BorderRadius.circular(16),
+                color: cardColor,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: borderColor),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined,
+                          color: theme.iconTheme.color),
+                      const SizedBox(width: 8),
+                      Text("Select Date",
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: theme.textTheme.bodyLarge?.color)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text("Choose an available date for your appointment",
+                      style: TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 20),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: dates.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1.8,
+                    ),
+                    itemBuilder: (context, index) {
+                      bool selected = selectedDateIndex == index;
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() => selectedDateIndex = index);
+                          getSlots(dates[index]["date"]);
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? const Color(0xFF2C67FF).withOpacity(0.08)
+                                : cardColor,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: selected
+                                  ? const Color(0xFF2C67FF)
+                                  : borderColor,
+                              width: selected ? 2 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(dates[index]["day_name"] ?? "",
+                                  style: const TextStyle(color: Colors.grey)),
+                              const SizedBox(height: 6),
+                              Text(
+                                dates[index]["date"]
+                                    .toString()
+                                    .substring(8, 10),
+                                style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.textTheme.bodyLarge?.color),
+                              ),
+                              Text(
+                                dates[index]["date"]
+                                    .toString()
+                                    .substring(5, 7),
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Time Slot
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: borderColor),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.access_time, color: theme.iconTheme.color),
+                      const SizedBox(width: 8),
+                      Text("Select Time Slot",
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: theme.textTheme.bodyLarge?.color)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text("Available time slots",
+                      style: TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 20),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: times.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 2.4,
+                    ),
+                    itemBuilder: (context, index) {
+                      bool selected = selectedTimeIndex == index;
+                      bool available =
+                          times[index]["status"] == "available";
+                      return GestureDetector(
+                        onTap: () {
+                          if (times[index]["status"] != "available") return;
+                          setState(() => selectedTimeIndex = index);
+                        },
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: available
+                                ? cardColor
+                                : (isDark
+                                    ? const Color(0xFF334155)
+                                    : Colors.grey.shade100),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: selected
+                                  ? const Color(0xFF2C67FF)
+                                  : borderColor,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                times[index]["time"]?.toString() ?? "",
+                                style: TextStyle(
+                                  color: available
+                                      ? theme.textTheme.bodyLarge?.color
+                                      : Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                times[index]["status"]?.toString() ?? "",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: available ? Colors.green : Colors.red,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Appointment Summary
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E3A5F) : const Color(0xFFF1F6FF),
+                borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: selected
-                      ? const Color(0xFF2C67FF)
-                      : Colors.grey.shade300,
-                  width: selected ? 2 : 1,
+                  color: isDark
+                      ? const Color(0xFF2C67FF).withOpacity(0.4)
+                      : const Color(0xFFC7DAFF),
                 ),
               ),
               child: Column(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-  Text(
-    dates[index]["day_name"] ?? "",
-    style: const TextStyle(
-      color: Colors.grey,
-    ),
-  ),
-
-  const SizedBox(height: 6),
-
-  Text(
-    dates[index]["date"]
-        .toString()
-        .substring(8, 10),
-    style: const TextStyle(
-      fontSize: 24,
-      fontWeight: FontWeight.bold,
-    ),
-  ),
-
-  Text(
-    dates[index]["date"]
-        .toString()
-        .substring(5, 7),
-    style: const TextStyle(
-      color: Colors.grey,
-    ),
-  ),
-],)
-            ),
-          );
-        },
-      ),
-    ],
-  ),
-),
-
-const SizedBox(height: 20),
-
-/// Time Slot
-Container(
-  width: double.infinity,
-  padding: const EdgeInsets.all(18),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(18),
-    border: Border.all(
-      color: const Color(0xFFE5E7EB),
-    ),
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-
-      const Row(
-        children: [
-          Icon(Icons.access_time),
-          SizedBox(width: 8),
-          Text(
-            "Select Time Slot",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-
-      const SizedBox(height: 8),
-
-      const Text(
-        "Available time slots",
-        style: TextStyle(
-          color: Colors.grey,
-        ),
-      ),
-
-      const SizedBox(height: 20),
-
-      GridView.builder(
-        shrinkWrap: true,
-        physics:
-            const NeverScrollableScrollPhysics(),
-        itemCount: times.length,
-        gridDelegate:
-            const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 2.4,
-        ),
-        itemBuilder: (context, index) {
-
-          bool selected =
-              selectedTimeIndex == index;
-             bool available =
-    times[index]["status"] ==
-        "available";
-
-          return GestureDetector(
-           onTap: () {
-
-  if (times[index]["status"] !=
-      "available") {
-    return;
-  }
-
-  setState(() {
-    selectedTimeIndex = index;
-  });
-},
-            child: Container(
-  alignment: Alignment.center,
-  decoration: BoxDecoration(
-    color: available
-        ? Colors.white
-        : Colors.grey.shade100,
-    borderRadius:
-        BorderRadius.circular(12),
-    border: Border.all(
-      color: selected
-          ? const Color(0xFF2C67FF)
-          : Colors.grey.shade300,
-    ),
-  ),
-  child: Column(
-    mainAxisAlignment:
-        MainAxisAlignment.center,
-    children: [
-
-     Text(
-  times[index]["time"]?.toString() ?? "",
-  style: TextStyle(
-    color: available
-        ? Colors.black
-        : Colors.grey,
-  ),
-),
-
-      const SizedBox(height: 4),
-Text(
-  times[index]["status"]?.toString() ?? "",
-  style: TextStyle(
-    fontSize: 11,
-    color: available
-        ? Colors.green
-        : Colors.red,
-  ),
-),
-    ],
-  ),
-),
-          );
-        },
-      ),
-    ],
-  ),
-),
-
-const SizedBox(height: 20),
-/// Appointment Summary
-Container(
-  width: double.infinity,
-  padding: const EdgeInsets.all(20),
-  decoration: BoxDecoration(
-    color: const Color(0xFFF1F6FF),
-    borderRadius: BorderRadius.circular(18),
-    border: Border.all(
-      color: const Color(0xFFC7DAFF),
-    ),
-  ),
-  child: Column(
-    crossAxisAlignment:
-        CrossAxisAlignment.start,
-    children: [
-
-      const Text(
-        "Appointment Summary",
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF2C67FF),
-        ),
-      ),
-
-      const SizedBox(height: 16),
-
-      Row(
-        children: const [
-          Icon(
-            Icons.calendar_today,
-            size: 18,
-            color: Color(0xFF2C67FF),
-          ),
-          SizedBox(width: 10),
-          Text("Sat, Feb 7"),
-        ],
-      ),
-
-      const SizedBox(height: 12),
-
-      Row(
-        children: [
-          const Icon(
-            Icons.access_time,
-            size: 18,
-            color: Color(0xFF2C67FF),
-          ),
-          const SizedBox(width: 10),
-          Text(
-  times.isNotEmpty
-      ? times[selectedTimeIndex]["time"]
-            ?.toString() ??
-          ""
-      : "No Time Selected",
-),
-        ],
-      ),
-
-      const SizedBox(height: 12),
-
-      Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.location_on_outlined,
-            size: 18,
-            color: Color(0xFF2C67FF),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-             widget.doctor["clinic_address"] ?? "No Address"
-            ),
-          ),
-        ],
-      ),
-
-      const SizedBox(height: 12),
-
-      Text(
-        ' \$${widget.doctor["consultation_fee"]}',
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-
-      const SizedBox(height: 20),
-
-      Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius:
-              BorderRadius.circular(12),
-          border: Border.all(
-            color: const Color(0xFFC7DAFF),
-          ),
-        ),
-        child: const Row(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-
-            Icon(
-              Icons.info_outline,
-              color: Colors.black54,
+                  const Text("Appointment Summary",
+                      style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2C67FF))),
+                  const SizedBox(height: 16),
+                  const Row(
+                    children: [
+                      Icon(Icons.calendar_today,
+                          size: 18, color: Color(0xFF2C67FF)),
+                      SizedBox(width: 10),
+                      Text("Sat, Feb 7"),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time,
+                          size: 18, color: Color(0xFF2C67FF)),
+                      const SizedBox(width: 10),
+                      Text(times.isNotEmpty
+                          ? times[selectedTimeIndex]["time"]?.toString() ?? ""
+                          : "No Time Selected"),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.location_on_outlined,
+                          size: 18, color: Color(0xFF2C67FF)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                            widget.doctor["clinic_address"] ?? "No Address"),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'EGP ${widget.doctor["consultation_fee"]}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF0F172A)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF2C67FF).withOpacity(0.3)
+                            : const Color(0xFFC7DAFF),
+                      ),
+                    ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.grey),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            "You'll be redirected to a secure payment page to complete your booking. No charges will be made until you confirm the payment.",
+                            style: TextStyle(
+                                color: Color(0xFF2C67FF), height: 1.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
 
-            SizedBox(width: 10),
+            const SizedBox(height: 20),
 
-            Expanded(
-              child: Text(
-                "You'll be redirected to a secure payment page to complete your booking. No charges will be made until you confirm the payment.",
-                style: TextStyle(
-                  color: Color(0xFF2C67FF),
-                  height: 1.5,
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (dates.isEmpty || times.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("Please select a date and time slot.")));
+                    return;
+                  }
+                  final dateStr =
+                      dates[selectedDateIndex]["date"]?.toString();
+                  final timeStr =
+                      times[selectedTimeIndex]["time"]?.toString();
+                  if (dateStr == null || timeStr == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("Selected slot is invalid.")));
+                    return;
+                  }
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) =>
+                        const Center(child: CircularProgressIndicator()),
+                  );
+                  try {
+                    final paymentService = PaymentService();
+                    final analysisId =
+                        await paymentService.getLatestAnalysisId();
+                    if (analysisId == null) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text(
+                              "No skin analysis found. Please run an AI analysis first.")));
+                      return;
+                    }
+                    final combinedDateIso = "${dateStr}T${timeStr}:00.000Z";
+                    String? appointmentId;
+                    try {
+                      final bookingResp =
+                          await paymentService.bookAppointment(
+                        doctorSyndicateId: widget
+                                .doctor["medical_syndicate_id_card"]
+                                ?.toString() ??
+                            '',
+                        date: combinedDateIso,
+                        analysisId: analysisId,
+                      );
+                      final data = bookingResp['data'] ?? bookingResp;
+                      appointmentId = data['appointment_id']?.toString() ??
+                          data['id']?.toString() ??
+                          data['appointment']?['id']?.toString();
+                    } catch (bookingError) {
+                      if (bookingError is DioException &&
+                          bookingError.response?.statusCode == 409) {
+                        appointmentId =
+                            await _findExistingPendingAppointment(
+                          doctorSyndicateId: widget
+                                  .doctor["medical_syndicate_id_card"]
+                                  ?.toString() ??
+                              '',
+                          dateIso: combinedDateIso,
+                        );
+                      }
+                      if (appointmentId == null) rethrow;
+                    }
+                    Navigator.pop(context);
+                    if (appointmentId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text(
+                              "Failed to book appointment. Invalid response from server.")));
+                      return;
+                    }
+                    final double fee = double.tryParse(widget
+                                .doctor["consultation_fee"]
+                                ?.toString() ??
+                            '') ??
+                        150.0;
+                    final docName =
+                        widget.doctor["name"]?.toString() ?? "Doctor";
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PaymentScreen(
+                          appointmentId: appointmentId!,
+                          doctorName: docName,
+                          consultationFee: fee,
+                          appointmentDate: "$dateStr at $timeStr",
+                        ),
+                      ),
+                    );
+                  } catch (e) {
+                    Navigator.pop(context);
+                    String errorMsg = "Failed to book appointment";
+                    if (e is DioException) {
+                      final serverMessage = e.response?.data?['message'] ??
+                          e.response?.data?['error'];
+                      if (serverMessage != null) {
+                        errorMsg = "$serverMessage";
+                      } else {
+                        errorMsg = "$errorMsg: ${e.message}";
+                      }
+                    } else {
+                      errorMsg = "$errorMsg: $e";
+                    }
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(errorMsg)));
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF020617),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
+                child: const Text("Proceed to Payment",
+                    style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
             ),
           ],
         ),
       ),
-    ],
-  ),
-),
-
-const SizedBox(height: 20),
-
-SizedBox(
-  width: double.infinity,
-  height: 55,
-  child: ElevatedButton(
-    onPressed: () async {
-      if (dates.isEmpty || times.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please select a date and time slot.")),
-        );
-        return;
-      }
-      
-      final dateStr = dates[selectedDateIndex]["date"]?.toString();
-      final timeStr = times[selectedTimeIndex]["time"]?.toString();
-      if (dateStr == null || timeStr == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Selected slot is invalid.")),
-        );
-        return;
-      }
-
-      // Show loading overlay
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-
-      try {
-        final paymentService = PaymentService();
-        final analysisId = await paymentService.getLatestAnalysisId();
-        if (analysisId == null) {
-          Navigator.pop(context); // dismiss loading
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("No skin analysis found. Please run an AI analysis first."),
-            ),
-          );
-          return;
-        }
-
-        // Combine date and time (e.g. "2026-02-07" and "09:00" -> "2026-02-07T09:00:00.000Z")
-        final combinedDateIso = "${dateStr}T${timeStr}:00.000Z";
-
-        String? appointmentId;
-
-        try {
-          final bookingResp = await paymentService.bookAppointment(
-            doctorSyndicateId: widget.doctor["medical_syndicate_id_card"]?.toString() ?? '',
-            date: combinedDateIso,
-            analysisId: analysisId,
-          );
-          final data = bookingResp['data'] ?? bookingResp;
-          appointmentId = data['appointment_id']?.toString() ?? 
-                              data['id']?.toString() ?? 
-                              data['appointment']?['id']?.toString();
-        } catch (bookingError) {
-          if (bookingError is DioException && bookingError.response?.statusCode == 409) {
-            debugPrint("Booking conflict (409). Searching for existing pending appointment...");
-            appointmentId = await _findExistingPendingAppointment(
-              doctorSyndicateId: widget.doctor["medical_syndicate_id_card"]?.toString() ?? '',
-              dateIso: combinedDateIso,
-            );
-          }
-          if (appointmentId == null) {
-            rethrow;
-          }
-        }
-
-        Navigator.pop(context); // dismiss loading
-
-        if (appointmentId == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Failed to book appointment. Invalid response from server.")),
-          );
-          return;
-        }
-
-        final double fee = double.tryParse(widget.doctor["consultation_fee"]?.toString() ?? '') ?? 150.0;
-        final docName = widget.doctor["name"]?.toString() ?? "Doctor";
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PaymentScreen(
-              appointmentId: appointmentId!,
-              doctorName: docName,
-              consultationFee: fee,
-              appointmentDate: "${dateStr} at ${timeStr}",
-            ),
-          ),
-        );
-      } catch (e) {
-        Navigator.pop(context); // dismiss loading
-        String errorMsg = "Failed to book appointment";
-        if (e is DioException) {
-          final serverMessage = e.response?.data?['message'] ?? e.response?.data?['error'];
-          if (serverMessage != null) {
-            errorMsg = "$serverMessage";
-          } else {
-            errorMsg = "$errorMsg: ${e.message}";
-          }
-        } else {
-          errorMsg = "$errorMsg: $e";
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg)),
-        );
-      }
-    },
-    style: ElevatedButton.styleFrom(
-      backgroundColor:
-          const Color(0xFF020617),
-      shape: RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.circular(12),
-      ),
-    ),
-    child: const Text(
-      "Proceed to Payment",
-      style: TextStyle(
-        color: Colors.white,
-        fontSize: 16,
-      ),
-    ),
-  ),
-),
-
-],
-),
-),
-);
-}
+    );
+  }
 
   Future<String?> _findExistingPendingAppointment({
     required String doctorSyndicateId,
@@ -807,18 +599,19 @@ SizedBox(
     try {
       final appointments = await PaymentService().getMyAppointments();
       for (var appt in appointments) {
-        final docId = appt['medical_syndicate_id_card']?.toString() ?? appt['doctor_id']?.toString();
+        final docId = appt['medical_syndicate_id_card']?.toString() ??
+            appt['doctor_id']?.toString();
         final apptDate = appt['date']?.toString();
         final status = appt['status']?.toString();
-        
         if (apptDate != null) {
           try {
             final apptDateTime = DateTime.parse(apptDate);
             final searchDateTime = DateTime.parse(dateIso);
-            if (docId == doctorSyndicateId && 
-                apptDateTime.isAtSameMomentAs(searchDateTime) && 
+            if (docId == doctorSyndicateId &&
+                apptDateTime.isAtSameMomentAs(searchDateTime) &&
                 status == 'pending_payment') {
-              return appt['appointment_id']?.toString() ?? appt['id']?.toString();
+              return appt['appointment_id']?.toString() ??
+                  appt['id']?.toString();
             }
           } catch (_) {}
         }
@@ -829,4 +622,3 @@ SizedBox(
     return null;
   }
 }
-

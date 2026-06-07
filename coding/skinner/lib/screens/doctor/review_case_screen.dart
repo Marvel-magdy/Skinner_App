@@ -15,7 +15,7 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
   final _prescriptionCtrl = TextEditingController();
   final _notesCtrl        = TextEditingController();
   bool _isSubmitting      = false;
-  bool _showForm          = false; // toggle "view & Edit report" section
+  bool _showForm          = false;
 
   @override
   void dispose() {
@@ -29,7 +29,7 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
     setState(() => _isSubmitting = true);
     try {
       await AuthService().reviewCase(
-        token: adminToken!,
+        token:         adminToken!,
         appointmentId: widget.caseData['appointment_id'].toString(),
         diagnosis:     _diagnosisCtrl.text,
         prescription:  _prescriptionCtrl.text,
@@ -52,28 +52,47 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Map d            = widget.caseData;
-    final String name      = d['patient_name'] ?? 'Patient';
-    final String age       = (d['age'] ?? d['patient_age'] ?? '--').toString();
-    final String gender    = (d['gender'] ?? d['patient_gender'] ?? '--').toString();
-    final String diagnosis = d['skin_disease_classification'] ??
-                             d['ai_diagnosis'] ?? 'Unknown';
-    final String imageUrl  = d['skin_image_upload'] ?? d['image_url'] ?? '';
-    final double conf      = ((d['confidence'] ?? d['ai_confidence'] ?? 0.0) as num).toDouble();
-    final String severity  = conf >= 0.85 ? 'HIGH' : conf >= 0.60 ? 'MEDIUM' : 'LOW';
-    final String confLabel = '${(conf * 100).toStringAsFixed(0)}% Confidence';
-    final String dateRaw   = (d['created_at'] ?? '').toString();
-    final String dateLabel = dateRaw.length >= 10
+    final theme    = Theme.of(context);
+    final isDark   = theme.brightness == Brightness.dark;
+
+    // ── adaptive colours ──────────────────────────────────────
+    final Color scaffoldBg  = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8F9FA);
+    final Color appBarBg    = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final Color cardBg      = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final Color cardBorder  = isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB);
+    final Color labelGrey   = isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280);
+    final Color bodyText    = isDark ? const Color(0xFFE2E8F0) : const Color(0xFF0F172A);
+    final Color outlinedBtn = isDark ? const Color(0xFF475569) : const Color(0xFFD1D5DB);
+    final Color outlinedTxt = isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151);
+    final Color aiBoxBg     = isDark ? const Color(0xFF1E3A5F) : const Color(0xFFF0F4FF);
+    final Color warnBoxBg   = isDark ? const Color(0xFF2D2000) : const Color(0xFFFFFBEB);
+    final Color warnBorder  = isDark ? Colors.amber.shade800   : Colors.amber.shade200;
+    final Color warnText    = isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E);
+    final Color fieldFill   = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final Color fieldBorder = isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB);
+    final Color backBtnColor = isDark ? Colors.white : const Color(0xFF0F172A);
+
+    final Map    d          = widget.caseData;
+    final String name       = d['patient_name'] ?? 'Patient';
+    final String age        = (d['age'] ?? d['patient_age'] ?? '--').toString();
+    final String gender     = (d['gender'] ?? d['patient_gender'] ?? '--').toString();
+    final String diagnosis  = d['skin_disease_classification'] ??
+                              d['ai_diagnosis'] ?? 'Unknown';
+    final String imageUrl   = d['skin_image_upload'] ?? d['image_url'] ?? '';
+    final double conf       = ((d['confidence'] ?? d['ai_confidence'] ?? 0.0) as num).toDouble();
+    final String severity   = conf >= 0.85 ? 'HIGH' : conf >= 0.60 ? 'MEDIUM' : 'LOW';
+    final String confLabel  = '${(conf * 100).toStringAsFixed(0)}% Confidence';
+    final String dateRaw    = (d['created_at'] ?? '').toString();
+    final String dateLabel  = dateRaw.length >= 10
         ? () {
             final p = dateRaw.substring(0, 10).split('-');
             return p.length == 3 ? '${p[1]}/${p[2]}/${p[0]}' : dateRaw;
           }()
         : dateRaw;
+    final String chatId     = (d['chat_id'] ?? '').toString();
+    final String chatTitle  = 'Chat – $name';
 
-    final String chatId  = (d['chat_id'] ?? '').toString();
-    final String chatTitle = 'Chat – $name';
-
-    // severity colours
+    // severity colours (bg stays pastel even in dark; fg stays vivid)
     final Color sevFg = severity == 'HIGH'
         ? const Color(0xFFEF4444)
         : severity == 'MEDIUM'
@@ -86,11 +105,11 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
             : const Color(0xFFE8F8EB);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: appBarBg,
         elevation: 0,
-        leading: const BackButton(color: Color(0xFF0F172A)),
+        leading: BackButton(color: backBtnColor),
         title: const Text(''),
         actions: [
           Padding(
@@ -98,14 +117,14 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
             child: OutlinedButton(
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFD1D5DB)),
+                side: BorderSide(color: outlinedBtn),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               ),
-              child: const Text('Back to List',
-                  style: TextStyle(color: Color(0xFF374151), fontSize: 13)),
+              child: Text('Back to List',
+                  style: TextStyle(color: outlinedTxt, fontSize: 13)),
             ),
           ),
         ],
@@ -118,32 +137,33 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
             // ── Title ──────────────────────────────────────────
             Text(
               'Case Review: $name',
-              style: const TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: bodyText),
             ),
             const SizedBox(height: 4),
             Text(
               'Submitted on $dateLabel',
-              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+              style: TextStyle(fontSize: 13, color: labelGrey),
             ),
 
             const SizedBox(height: 20),
 
-            // ── White card ─────────────────────────────────────
+            // ── Card ───────────────────────────────────────────
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: cardBorder),
               ),
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Patient Image
-                  const Text('Patient Image',
-                      style: TextStyle(
-                          fontSize: 12, color: Color(0xFF6B7280))),
+                  Text('Patient Image',
+                      style: TextStyle(fontSize: 12, color: labelGrey)),
                   const SizedBox(height: 10),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -163,14 +183,13 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
                   const SizedBox(height: 20),
 
                   // Patient Information
-                  const Text('Patient Information',
-                      style: TextStyle(
-                          fontSize: 12, color: Color(0xFF6B7280))),
+                  Text('Patient Information',
+                      style: TextStyle(fontSize: 12, color: labelGrey)),
                   const SizedBox(height: 8),
                   RichText(
                     text: TextSpan(
-                      style: const TextStyle(
-                          color: Color(0xFF0F172A), fontSize: 14, height: 1.7),
+                      style: TextStyle(
+                          color: bodyText, fontSize: 14, height: 1.7),
                       children: [
                         const TextSpan(
                             text: 'Age:\n',
@@ -193,7 +212,7 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0F4FF),
+                      color: aiBoxBg,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -201,16 +220,23 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
                       children: [
                         Text(
                           diagnosis,
-                          style: const TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: bodyText),
                         ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
                             _badge('$severity Severity', sevBg, sevFg),
                             const SizedBox(width: 8),
-                            _badge(confLabel, Colors.grey.shade100,
-                                Colors.black87),
+                            _badge(
+                              confLabel,
+                              isDark
+                                  ? const Color(0xFF334155)
+                                  : Colors.grey.shade100,
+                              isDark ? Colors.white70 : Colors.black87,
+                            ),
                           ],
                         ),
                       ],
@@ -223,9 +249,9 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFFBEB),
+                      color: warnBoxBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.amber.shade200),
+                      border: Border.all(color: warnBorder),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,13 +259,11 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
                         Icon(Icons.info_outline_rounded,
                             size: 16, color: Colors.amber.shade700),
                         const SizedBox(width: 8),
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'AI analysis is preliminary.\nPlease provide your professional assessment.',
                             style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF92400E),
-                                height: 1.4),
+                                fontSize: 12, color: warnText, height: 1.4),
                           ),
                         ),
                       ],
@@ -256,19 +280,18 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
               width: double.infinity,
               height: 50,
               child: OutlinedButton(
-                onPressed: () =>
-                    setState(() => _showForm = !_showForm),
+                onPressed: () => setState(() => _showForm = !_showForm),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD1D5DB)),
+                  side: BorderSide(color: outlinedBtn),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
                 child: Text(
                   _showForm ? 'Hide Report Form' : 'view&Edit report',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF374151)),
+                      color: outlinedTxt),
                 ),
               ),
             ),
@@ -276,11 +299,14 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
             // ── Collapsible form ───────────────────────────────
             if (_showForm) ...[
               const SizedBox(height: 16),
-              _formField('Diagnosis', _diagnosisCtrl, maxLines: 3),
+              _formField('Diagnosis',    _diagnosisCtrl,    maxLines: 3,
+                  fill: fieldFill, border: fieldBorder, labelColor: bodyText),
               const SizedBox(height: 12),
-              _formField('Prescription', _prescriptionCtrl, maxLines: 3),
+              _formField('Prescription', _prescriptionCtrl, maxLines: 3,
+                  fill: fieldFill, border: fieldBorder, labelColor: bodyText),
               const SizedBox(height: 12),
-              _formField('Notes', _notesCtrl, maxLines: 4),
+              _formField('Notes',        _notesCtrl,        maxLines: 4,
+                  fill: fieldFill, border: fieldBorder, labelColor: bodyText),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
@@ -298,8 +324,8 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child:
-                              CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
                       : const Text('Submit Review',
                           style: TextStyle(
@@ -310,7 +336,7 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
 
             const SizedBox(height: 12),
 
-            // ── Read chat ──────────────────────────────────────
+            // ── Continue chat ──────────────────────────────────
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -330,12 +356,13 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0F172A),
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.grey.shade300,
+                  disabledBackgroundColor:
+                      isDark ? const Color(0xFF334155) : Colors.grey.shade300,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Read chat',
+                child: const Text('Continue chat',
                     style:
                         TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               ),
@@ -356,34 +383,49 @@ class _ReviewCaseScreenState extends State<ReviewCaseScreen> {
 
   Widget _badge(String text, Color bg, Color fg) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-            color: bg, borderRadius: BorderRadius.circular(20)),
+        decoration:
+            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
         child: Text(text,
             style: TextStyle(
                 fontSize: 11, fontWeight: FontWeight.w600, color: fg)),
       );
 
-  Widget _formField(String label, TextEditingController ctrl,
-      {int maxLines = 1}) {
+  Widget _formField(
+    String label,
+    TextEditingController ctrl, {
+    int maxLines = 1,
+    required Color fill,
+    required Color border,
+    required Color labelColor,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: labelColor)),
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
           maxLines: maxLines,
+          style: TextStyle(color: labelColor),
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white,
+            fillColor: fill,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              borderSide: BorderSide(color: border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              borderSide: BorderSide(color: border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: Color(0xFF2C67FF), width: 1.5),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

@@ -243,6 +243,7 @@ class _ChatBadgeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool hasChat = chatId.isNotEmpty;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -283,7 +284,9 @@ class _ChatBadgeButton extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: hasChat ? const Color(0xFF1E293B) : Colors.grey,
+                color: hasChat
+                    ? (isDark ? Colors.white : const Color(0xFF1E293B))
+                    : Colors.grey,
               ),
             ),
           ),

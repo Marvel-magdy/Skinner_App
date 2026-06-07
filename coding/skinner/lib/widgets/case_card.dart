@@ -135,7 +135,7 @@ class CaseCard extends StatelessWidget {
               onPressed: () {},
 
               child: const Text(
-                  "Review Case"),
+                  "Finished Case"),
             ),
           )
         ],

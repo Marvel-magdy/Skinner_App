@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:skinner/l10n/app_translations.dart';
-
+import 'package:provider/provider.dart';
+import 'package:skinner/theme/theme_provider.dart';
 import 'package:skinner/authuntication/create_account.dart';
+
+//import 'package:skinner/authuntication/register.dart';
 import 'package:skinner/authuntication/forgot_password.dart';
 
 import 'package:skinner/users/dashboard_admin.dart';
@@ -25,15 +27,15 @@ class _SignInState extends State<SignIn> {
   /// Password visibility
   bool _obscurePassword = true;
 
-  final TextEditingController emailController =
-  TextEditingController();
-  /// Controllers (مهمين للـ API بعدين)
-
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   final AuthService authService = AuthService();
 
   bool isLoading = false;
+
+  /// رسالة الخطأ عند إدخال بيانات خاطئة
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -42,9 +44,6 @@ class _SignInState extends State<SignIn> {
     super.dispose();
   }
 
-
-
-  /// Navigation حسب الـ Role
   /// Navigation حسب الـ Role
   void _navigateBasedOnRole() {
     if (_selectedRole == 'Administrator') {
@@ -63,7 +62,6 @@ class _SignInState extends State<SignIn> {
             (route) => false,
       );
     }
-//>>>>>>> 731f4660a57c1a1b8f5aa9434e4d5858e63fa344
   }
 
   /// تحويل الـ Role للـ API
@@ -80,14 +78,15 @@ class _SignInState extends State<SignIn> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final cardColor = theme.cardColor;
-    final fieldFill = isDark ? const Color(0xFF334155) : const Color(0xFFF5F5F5);
+    final inputFill = isDark ? const Color(0xFF334155) : const Color(0xFFF5F5F5);
+    final labelColor = isDark ? const Color(0xFFE2E8F0) : Colors.black87;
+    final hintColor = isDark ? const Color(0xFF94A3B8) : Colors.grey;
 
     return Scaffold(
       body: SafeArea(
@@ -96,26 +95,55 @@ class _SignInState extends State<SignIn> {
             children: [
               /// Logo
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 40,
+                ),
                 child: Row(
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(20),
-                      child: Image.asset('assets/Untitled-1-01 1.png',
-                          width: 80, height: 80, fit: BoxFit.cover),
+                      child: Image.asset(
+                        'assets/Untitled-1-01 1.png',
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     const SizedBox(width: 14),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(AppL10n.of(context, AppStrings.appName),
-                            style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2C67FF))),
-                        Text(AppL10n.of(context, AppStrings.skinDetectionSys),
-                            style: const TextStyle(fontSize: 14, color: Color(0xFF2C67FF))),
+                      children: const [
+                        Text(
+                          'Skinner',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C67FF),
+                          ),
+                        ),
+                        Text(
+                          'Skin disease detection system',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF2C67FF),
+                          ),
+                        ),
                       ],
+                    ),
+                    const Spacer(),
+                    Consumer<ThemeProvider>(
+                      builder: (context, themeProvider, _) => IconButton(
+                        onPressed: themeProvider.toggleTheme,
+                        icon: Icon(
+                          themeProvider.isDark
+                              ? Icons.light_mode_outlined
+                              : Icons.dark_mode_outlined,
+                          size: 22,
+                          color: Colors.grey,
+                        ),
+                        tooltip: themeProvider.isDark ? 'Light mode' : 'Dark mode',
+                      ),
                     ),
                   ],
                 ),
@@ -141,26 +169,31 @@ class _SignInState extends State<SignIn> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       /// Title
-                      Text(AppL10n.of(context, AppStrings.signIn),
-                          style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: theme.textTheme.bodyLarge?.color)),
+                      Text(
+                        'Sign In',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: labelColor,
+                        ),
+                      ),
                       const SizedBox(height: 6),
-                      Text(AppL10n.of(context, AppStrings.signInSubtitle),
-                          style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                      Text(
+                        'Enter your credentials to access your account',
+                        style: TextStyle(fontSize: 14, color: hintColor),
+                      ),
                       const SizedBox(height: 24),
 
                       /// Role Dropdown
-                      Text(AppL10n.of(context, AppStrings.iAmA),
-                          style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              color: theme.textTheme.bodyLarge?.color)),
+                      Text(
+                        'I am a',
+                        style: TextStyle(fontWeight: FontWeight.w500, color: labelColor),
+                      ),
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
-                          color: fieldFill,
+                          color: inputFill,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: DropdownButton<String>(
@@ -168,127 +201,253 @@ class _SignInState extends State<SignIn> {
                           isExpanded: true,
                           underline: const SizedBox(),
                           dropdownColor: cardColor,
-                          style: TextStyle(color: theme.textTheme.bodyLarge?.color, fontSize: 14),
+                          style: TextStyle(color: labelColor, fontSize: 14),
+                          iconEnabledColor: hintColor,
                           items: _roles.map((role) {
-                            String label;
-                            switch (role) {
-                              case 'Doctor': label = AppL10n.of(context, AppStrings.doctor); break;
-                              case 'Administrator': label = AppL10n.of(context, AppStrings.administrator); break;
-                              default: label = AppL10n.of(context, AppStrings.patient);
-                            }
-                            return DropdownMenuItem(value: role, child: Text(label));
+                            return DropdownMenuItem(
+                              value: role,
+                              child: Text(role),
+                            );
                           }).toList(),
-                          onChanged: (value) => setState(() => _selectedRole = value!),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedRole = value!;
+                            });
+                          },
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       /// Email
-                      Text(AppL10n.of(context, AppStrings.email),
-                          style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
+                      Text('Email', style: TextStyle(color: labelColor)),
                       const SizedBox(height: 8),
                       TextField(
                         controller: emailController,
-                        style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                        style: TextStyle(color: labelColor),
+                        onChanged: (value) {
+                          if (_errorMessage != null) {
+                            setState(() {
+                              _errorMessage = null;
+                            });
+                          }
+                        },
                         decoration: InputDecoration(
                           hintText: 'name@example.com',
+                          hintStyle: TextStyle(color: hintColor),
                           filled: true,
-                          fillColor: fieldFill,
+                          fillColor: inputFill,
                           border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide.none),
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: _errorMessage != null
+                                ? const BorderSide(color: Colors.red, width: 1)
+                                : BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: _errorMessage != null
+                                ? const BorderSide(color: Colors.red, width: 1)
+                                : BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                              color: _errorMessage != null
+                                  ? Colors.red
+                                  : const Color(0xFF2C67FF),
+                              width: 1.5,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       /// Password
-                      Text(AppL10n.of(context, AppStrings.password),
-                          style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
+                      Text('Password', style: TextStyle(color: labelColor)),
                       const SizedBox(height: 8),
                       TextField(
                         controller: passwordController,
                         obscureText: _obscurePassword,
-                        style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                        style: TextStyle(color: labelColor),
+                        onChanged: (value) {
+                          if (_errorMessage != null) {
+                            setState(() {
+                              _errorMessage = null;
+                            });
+                          }
+                        },
                         decoration: InputDecoration(
                           filled: true,
-                          fillColor: fieldFill,
+                          fillColor: inputFill,
                           border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide.none),
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: _errorMessage != null
+                                ? const BorderSide(color: Colors.red, width: 1)
+                                : BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: _errorMessage != null
+                                ? const BorderSide(color: Colors.red, width: 1)
+                                : BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                              color: _errorMessage != null
+                                  ? Colors.red
+                                  : const Color(0xFF2C67FF),
+                              width: 1.5,
+                            ),
+                          ),
                           suffixIcon: IconButton(
-                            icon: Icon(_obscurePassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined),
-                            onPressed: () =>
-                                setState(() => _obscurePassword = !_obscurePassword),
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: hintColor,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      /// رسالة الخطأ الحمراء أسفل حقل الباسورد (تظهر فقط عند حدوث خطأ)
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 24),
+
+                      /// Sign In Button
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                isDark ? const Color(0xFF2C67FF) : Colors.black,
+                            backgroundColor: Colors.black,
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           onPressed: () async {
-                            setState(() => isLoading = true);
+                            setState(() {
+                              _errorMessage = null; // إعادة ضبط حالة الخطأ عند محاولة تسجيل دخول جديدة
+                              isLoading = true;
+                            });
+
                             try {
                               final response = await authService.login(
                                 email: emailController.text.trim(),
                                 password: passwordController.text.trim(),
                                 role: getApiRole(),
                               );
-                              final token = response.data["token"];
-                              if (token != null) {
-                                final prefs = await SharedPreferences.getInstance();
-                                await prefs.setString('token', token);
-                              }
+
+                              // Persist session so the app survives restarts
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setString('token', adminToken ?? '');
+                              await prefs.setString('role', _selectedRole);
+                              // Also save the API-style role (lowercase) for chat message ownership
+                              await prefs.setString('api_role', getApiRole());
+
+                              print(response.data);
+
                               ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(AppL10n.of(context, AppStrings.loginSuccess))));
+                                const SnackBar(
+                                  content: Text('Login Success'),
+                                ),
+                              );
+
                               _navigateBasedOnRole();
                             } catch (e) {
+                              setState(() {
+                                _errorMessage = 'Incorrect email or password';
+                                emailController.clear();
+                                passwordController.clear();
+                              });
                               ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('${AppL10n.of(context, AppStrings.loginFailed)}: $e')));
+                                SnackBar(
+                                  content: Text('Login Failed: $e'),
+                                ),
+                              );
                             } finally {
-                              setState(() => isLoading = false);
+                              setState(() {
+                                isLoading = false;
+                              });
                             }
                           },
                           child: isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
-                              : Text(AppL10n.of(context, AppStrings.signIn),
-                                  style: const TextStyle(fontSize: 16, color: Colors.white)),
+                              ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                              : const Text(
+                            'Sign In',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
 
                       const SizedBox(height: 16),
+
+                      /// Register
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                        Text(AppL10n.of(context, AppStrings.noAccount),
-                              style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
+                          Text(
+                            "Don't have an account? ",
+                            style: TextStyle(color: labelColor),
+                          ),
                           GestureDetector(
-                            onTap: () => Navigator.push(
-                                context, MaterialPageRoute(builder: (_) => Register())),
-                            child: Text(AppL10n.of(context, AppStrings.registerHere),
-                                style: const TextStyle(
-                                    color: Color(0xFF2C67FF),
-                                    fontWeight: FontWeight.w600)),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const Register(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              'Register here',
+                              style: TextStyle(
+                                color: Color(0xFF2C67FF),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 10),
+
+                      /// Forgot Password
                       Center(
                         child: GestureDetector(
-                          onTap: () => Navigator.push(context,
-                              MaterialPageRoute(builder: (_) => ForgotPassword())),
-                          child: Text(AppL10n.of(context, AppStrings.forgotPassword),
-                              style: const TextStyle(color: Color(0xFF2C67FF))),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ForgotPassword(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            'Forgot password?',
+                            style: TextStyle(color: Color(0xFF2C67FF)),
+                          ),
                         ),
                       ),
                     ],

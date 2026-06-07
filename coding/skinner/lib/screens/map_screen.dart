@@ -330,21 +330,21 @@ class _MapScreenState extends State<MapScreen> {
     final String phone = widget.doctor['phone'] ?? widget.doctor['contact'] ?? '';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: widget.onBack,
         ),
         title: Text(
           doctorName,
-          style: const TextStyle(
-            color: Color(0xFF0F172A),
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyLarge?.color,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         centerTitle: false,
       ),
@@ -456,7 +456,7 @@ class _MapScreenState extends State<MapScreen> {
 
                     // ── ETA bar ────────────────────────────────────────
                     Container(
-                      color: Colors.white,
+                      color: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).cardColor,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                       child: Row(
@@ -484,19 +484,7 @@ class _MapScreenState extends State<MapScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          // More options button
-                          Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.more_horiz_rounded,
-                                  color: Color(0xFF475569)),
-                              onPressed: () {},
-                            ),
-                          ),
+
                         ],
                       ),
                     ),
@@ -505,7 +493,7 @@ class _MapScreenState extends State<MapScreen> {
                     Expanded(
                       flex: 9,
                       child: Container(
-                        color: Colors.white,
+                        color: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).cardColor,
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                           child: Column(
@@ -522,7 +510,6 @@ class _MapScreenState extends State<MapScreen> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF0F172A),
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -600,7 +587,7 @@ class _MapScreenState extends State<MapScreen> {
       bottomNavigationBar: _isLoading || _errorMessage != null
           ? null
           : Container(
-              color: Colors.white,
+              color: Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).cardColor,
               padding: EdgeInsets.only(
                 left: 20,
                 right: 20,

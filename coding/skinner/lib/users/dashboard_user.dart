@@ -19,6 +19,7 @@ import 'package:skinner/services/analysis_adapter.dart';
 import 'package:skinner/models/analysis_result.dart';
 import 'package:skinner/services/image_upload_helper.dart';
 import 'package:skinner/l10n/app_translations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardUser extends StatefulWidget {
   const DashboardUser({super.key});
@@ -391,6 +392,10 @@ class _DashboardUserState extends State<DashboardUser> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    // Safety: if doctors tab is active but no analysis, fall back to upload tab
+    if (_currentTabIndex == 2 && analysisResult == null) {
+      _currentTabIndex = 0;
+    }
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
@@ -422,7 +427,12 @@ class _DashboardUserState extends State<DashboardUser> {
                 ? AnalysisScreen(
                     analysisResult: analysisResult,
                     selectedImage: _selectedImage,
-                    onFindDoctors: () => setState(() => _currentTabIndex = 2),
+                    onFindDoctors: () => setState(() {
+                      _currentTabIndex = 2;
+                      showAppointmentScreen = false;
+                      showMapScreen = false;
+                      selectedDoctor = null;
+                    }),
                   )
                 : _currentTabIndex == 2
                 ? (showAppointmentScreen
@@ -484,7 +494,11 @@ class _DashboardUserState extends State<DashboardUser> {
             );
           },
           child: ClipOval(
-            child: Image.asset("assets/download.png", fit: BoxFit.cover),
+            child: Icon(
+            Icons.chat_bubble_rounded,
+              size: 28,
+              color: Colors.blueAccent,
+            ),
           ),
         ),
       ),
@@ -520,7 +534,13 @@ class _DashboardUserState extends State<DashboardUser> {
             ],
           ),
           GestureDetector(
-            onTap: () {
+            onTap: () async {
+              // Clear persisted session on logout
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('token');
+              await prefs.remove('role');
+              adminToken = null;
+              if (!context.mounted) return;
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const SignIn()),
                 (route) => false,
@@ -573,7 +593,8 @@ class _DashboardUserState extends State<DashboardUser> {
           children: [
             _buildSegmentedTab(Icons.cloud_upload_outlined, AppL10n.of(context, AppStrings.upload), 0),
             _buildSegmentedTab(Icons.analytics_outlined, AppL10n.of(context, AppStrings.analysis), 1),
-            _buildSegmentedTab(Icons.calendar_today_outlined, AppL10n.of(context, AppStrings.doctors), 2),
+            if (analysisResult != null)
+              _buildSegmentedTab(Icons.calendar_today_outlined, AppL10n.of(context, AppStrings.doctors), 2),
             _buildChatTab(3),
             _buildSegmentedTab(Icons.person_outline, AppL10n.of(context, AppStrings.patient), 4),
           ],
@@ -1122,34 +1143,4 @@ class _DashboardUserState extends State<DashboardUser> {
     );
   }
 
-  Widget _buildAnalysisScreen() {
-    final theme = Theme.of(context);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: theme.dividerColor),
-        ),
-        child: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "AI Analysis Results",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-
-            SizedBox(height: 20),
-
-            Text(
-              "Analysis completed successfully",
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

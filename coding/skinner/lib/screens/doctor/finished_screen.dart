@@ -7,15 +7,11 @@ class FinishedScreen extends StatefulWidget {
   const FinishedScreen({super.key});
 
   @override
-  State<FinishedScreen> createState() =>
-      _FinishedScreenState();
+  State<FinishedScreen> createState() => _FinishedScreenState();
 }
 
-class _FinishedScreenState
-    extends State<FinishedScreen> {
-
+class _FinishedScreenState extends State<FinishedScreen> {
   List reviewedCases = [];
-
   bool isLoading = true;
 
   @override
@@ -24,37 +20,28 @@ class _FinishedScreenState
     getCases();
   }
 
+  /// Prefer in-memory global token (set right after login),
+  /// fall back to SharedPreferences.
+  Future<String> _resolveToken() async {
+    if (adminToken != null && adminToken!.isNotEmpty) return adminToken!;
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') ?? '';
+  }
+
   Future<void> getCases() async {
-
     try {
+      final token = await _resolveToken();
+      if (token.isEmpty) throw Exception('No auth token');
 
-      SharedPreferences prefs =
-          await SharedPreferences.getInstance();
-
-      String? token =
-          prefs.getString('token');
-
-      final response =
-          await AuthService().getReviewedCases(
-        token: token!,
-      );
+      final response = await AuthService().getReviewedCases(token: token);
 
       setState(() {
-
-        reviewedCases =
-            response.data["data"];
-
+        reviewedCases = response.data['data'] ?? [];
         isLoading = false;
-
       });
-
     } catch (e) {
-
-      print(e);
-
-      setState(() {
-        isLoading = false;
-      });
+      debugPrint('FinishedScreen error: $e');
+      setState(() => isLoading = false);
     }
   }
 

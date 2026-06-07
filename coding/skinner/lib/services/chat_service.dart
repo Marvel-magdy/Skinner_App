@@ -91,4 +91,50 @@ class ChatService {
       return null;
     }
   }
+
+  /// GET /api/chat/case-summary/{chatId}
+  /// Fetches the analysis/case summary linked to a chat channel.
+  /// Returns patient info, AI prediction, confidence, skin image, etc.
+  Future<Map<String, dynamic>?> getCaseSummary({required String chatId}) async {
+    // Try the chat access endpoint first — it often returns linked case data
+    try {
+      final resp = await _dio.get(
+        '/api/chat/access/$chatId',
+        options: await _authOptions(),
+      );
+      final data = resp.data;
+      if (data is Map) {
+        final inner = data['data'] ?? data;
+        if (inner is Map && inner.isNotEmpty) {
+          return Map<String, dynamic>.from(inner as Map);
+        }
+      }
+    } catch (_) {}
+
+    // Fallback: try /api/chat/messages/{chatId} — response root often has case fields
+    try {
+      final resp = await _dio.get(
+        '/api/chat/messages/$chatId',
+        options: await _authOptions(),
+      );
+      final data = resp.data;
+      if (data is Map) {
+        // top-level may have case summary fields
+        final result = Map<String, dynamic>.from(data as Map);
+        if (result.containsKey('skin_disease_classification') ||
+            result.containsKey('ai_diagnosis') ||
+            result.containsKey('patient_name')) {
+          return result;
+        }
+        // or nested under 'case' / 'appointment'
+        for (final key in ['case', 'appointment', 'summary', 'analysis']) {
+          if (data[key] is Map) {
+            return Map<String, dynamic>.from(data[key] as Map);
+          }
+        }
+      }
+    } catch (_) {}
+
+    return null;
+  }
 }

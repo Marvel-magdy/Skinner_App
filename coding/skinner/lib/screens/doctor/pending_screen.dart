@@ -12,7 +12,6 @@ class PendingScreen extends StatefulWidget {
 
 class _PendingScreenState extends State<PendingScreen> {
   List cases = [];
-
   bool isLoading = true;
 
   @override
@@ -21,28 +20,28 @@ class _PendingScreenState extends State<PendingScreen> {
     getCases();
   }
 
+  /// Resolve token: prefer the in-memory global (set right after login),
+  /// fall back to SharedPreferences for cases where the app was restarted.
+  Future<String> _resolveToken() async {
+    if (adminToken != null && adminToken!.isNotEmpty) return adminToken!;
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') ?? '';
+  }
+
   Future<void> getCases() async {
     try {
-      SharedPreferences prefs =
-          await SharedPreferences.getInstance();
+      final token = await _resolveToken();
+      if (token.isEmpty) throw Exception('No auth token');
 
-      String? token = prefs.getString('token');
-
-      final response =
-          await AuthService().getPendingCases(
-        token: token!,
-      );
+      final response = await AuthService().getPendingCases(token: token);
 
       setState(() {
-        cases = response.data["data"];
+        cases = response.data['data'] ?? [];
         isLoading = false;
       });
     } catch (e) {
-      print(e);
-
-      setState(() {
-        isLoading = false;
-      });
+      debugPrint('PendingScreen error: $e');
+      setState(() => isLoading = false);
     }
   }
 

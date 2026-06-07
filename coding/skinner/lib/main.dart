@@ -5,12 +5,26 @@ import 'package:skinner/theme/theme_provider.dart';
 import 'package:skinner/l10n/app_translations.dart';
 import 'package:skinner/splashScreen.dart';
 
-void main() {
+void main() async {
+  // Must be called before any platform-channel code (SharedPreferences, etc.)
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Pre-load providers so the first frame already has the correct theme/locale
+  // and the splash screen renders immediately without a blank flash.
+  final themeProvider  = ThemeProvider();
+  final localeProvider = LocaleProvider();
+
+  // Wait for both providers to finish reading from SharedPreferences
+  await Future.wait([
+    themeProvider.loadFromPrefs(),
+    localeProvider.loadFromPrefs(),
+  ]);
+
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
+        ChangeNotifierProvider<LocaleProvider>.value(value: localeProvider),
       ],
       child: const Skinner(),
     ),
@@ -40,7 +54,6 @@ class Skinner extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      // Inject the locale code into the entire widget tree
       builder: (context, child) => LocaleScope(
         localeCode: localeProvider.locale.languageCode,
         child: Directionality(
